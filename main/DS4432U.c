@@ -18,11 +18,20 @@
 #define DS4432U_OUT1_REG 0xF9    // register for current output 1
 
 // DS4432U Transfer function constants
-#define VFB 0.6
-#define IFS 0.000098921 // (Vrfs / Rfs) x (127/16)  -> Vrfs = 0.997, Rfs = 80000
-#define RA 4750.0       // R14
-#define RB 3320.0       // R15
-#define NOMINAL 1.451   // this is with the current DAC set to 0. Should be pretty close to (VFB*(RA+RB))/RB
+#define VFB     0.6
+#define V_RFS   0.997       //datasheet value
+#if CONFIG_BITAXE2_A
+    #define RA      33000.0      //R11
+    #define RB      22000.0      //R10
+    #define R_FS    100000       //R19 - board resistor that define the full scale
+    #define IFS     (V_RFS *127 / R_FS / 16) //(V_RFS / R_FS) x (127/16) 
+#else
+    #define RA      4750.0      //R14
+    #define RB      3320.0      //R15
+    #define R_FS    80000       //board resistor that define the full scale
+    #define IFS     0.000098921 // (V_RFS / R_FS) x (127/16) 
+#endif
+#define NOMINAL ((VFB*(RA+RB))/RB)       //this is with the current DAC set to 0. Should be pretty close to (VFB*(RA+RB))/RB
 #define MAXV 2.39
 #define MINV 0.046
 
