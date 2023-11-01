@@ -202,7 +202,8 @@ static esp_err_t PATCH_update_settings(httpd_req_t * req)
     char * wifiPass = cJSON_GetObjectItem(root, "wifiPass")->valuestring;
 
     uint16_t coreVoltage = cJSON_GetObjectItem(root, "coreVoltage")->valueint;
-    uint16_t frequency = cJSON_GetObjectItem(root, "frequency")->valueint;
+    uint16_t maxPower = cJSON_GetObjectItem(root, "maxPower")->valueint;
+    uint16_t maxFrequency = cJSON_GetObjectItem(root, "maxFrequency")->valueint;
 
     uint16_t flip_screen = cJSON_GetObjectItem(root, "flipscreen")->valueint;
     uint16_t invert_screen = cJSON_GetObjectItem(root, "invertscreen")->valueint;
@@ -216,7 +217,8 @@ static esp_err_t PATCH_update_settings(httpd_req_t * req)
     nvs_config_set_string(NVS_CONFIG_WIFI_SSID, ssid);
     nvs_config_set_string(NVS_CONFIG_WIFI_PASS, wifiPass);
     nvs_config_set_u16(NVS_CONFIG_ASIC_VOLTAGE, coreVoltage);
-    nvs_config_set_u16(NVS_CONFIG_ASIC_FREQ, frequency);
+    nvs_config_set_u16(NVS_CONFIG_ASIC_MAXPOWER, maxPower);
+    nvs_config_set_u16(NVS_CONFIG_ASIC_FREQ, maxFrequency);
     nvs_config_set_u16(NVS_CONFIG_FLIP_SCREEN, flip_screen);
     nvs_config_set_u16(NVS_CONFIG_INVERT_SCREEN, invert_screen);
     nvs_config_set_u16(NVS_CONFIG_INVERT_FAN_POLARITY, invert_screen);

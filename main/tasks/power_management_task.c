@@ -10,6 +10,7 @@
 #include "math.h"
 #include "serial.h"
 #include "adc.h"
+#include "nvs_config.h"
 
 #define POLL_RATE 100
 #define MAX_TEMP 90.0
@@ -84,10 +85,12 @@ void POWER_MANAGEMENT_task(void * pvParameters){
     PowerManagementModule * power_management = &GLOBAL_STATE->POWER_MANAGEMENT_MODULE;
     SystemModule *module = &GLOBAL_STATE->SYSTEM_MODULE;
 
+    float maxFreq = nvs_config_get_u16(NVS_CONFIG_ASIC_FREQ, CONFIG_ASIC_FREQUENCY);
+
 
     float voltage_multiplier = 0;
-    float current_multiplier = ((float)power_management->frequency_value)/CONFIG_ASIC_FREQUENCY; //get the multiplier value that matches to the initial value
-    float power_multiplier = ((float)power_management->frequency_value)/CONFIG_ASIC_FREQUENCY; //get the multiplier value that matches to the initial value
+    float current_multiplier = ((float)power_management->frequency_value)/maxFreq; //get the multiplier value that matches to the initial value
+    float power_multiplier = ((float)power_management->frequency_value)/maxFreq; //get the multiplier value that matches to the initial value
 
     float current_error = 0;
     float current_error_old = 0;
@@ -98,7 +101,7 @@ void POWER_MANAGEMENT_task(void * pvParameters){
     float last_frequency_increase = 0;
     float target_frequency;
 
-    power_management->power_setpoint = CONFIG_ASIC_POWER/1000.0;
+    power_management->power_setpoint = nvs_config_get_u16(NVS_CONFIG_ASIC_MAXPOWER, CONFIG_ASIC_POWER)/1000.0;
     float power_error;
 
     float temp_setpoint = MAX_TEMP;
@@ -142,7 +145,7 @@ void POWER_MANAGEMENT_task(void * pvParameters){
 
         power_management->frequency_multiplier = power_multiplier;
 
-        target_frequency = _fbound(power_management->frequency_multiplier * CONFIG_ASIC_FREQUENCY, 25, CONFIG_ASIC_FREQUENCY);
+        target_frequency = _fbound(power_management->frequency_multiplier * maxFreq, 25, maxFreq);
 
         power_management->frequency_value = target_frequency;
 

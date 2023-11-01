@@ -10,7 +10,7 @@
 #define NVS_CONFIG_STRATUM_USER "stratumuser"
 #define NVS_CONFIG_STRATUM_PASS "stratumpass"
 #define NVS_CONFIG_ASIC_MAXPOWER "asicMaxPower"
-#define NVS_CONFIG_ASIC_FREQ "asicfrequency"
+#define NVS_CONFIG_ASIC_FREQ "asicMaxfrequency"
 #define NVS_CONFIG_ASIC_VOLTAGE "asicvoltage"
 #define NVS_CONFIG_ASIC_MODEL "asicmodel"
 #define NVS_CONFIG_DEVICE_MODEL "devicemodel"
