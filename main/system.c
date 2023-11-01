@@ -34,6 +34,18 @@ static void _suffix_string(uint64_t, char *, size_t, int);
 static esp_netif_t * netif;
 static esp_netif_ip_info_t ip_info;
 
+#if CONFIG_BITAXE2_A
+inline void turnOFF_Vcore(void)
+{
+    gpio_set_level(GPIO_NUM_14, 1);
+}
+
+inline void turnON_Vcore(void)
+{
+    gpio_set_level(GPIO_NUM_14, 0);
+}
+#endif
+
 static void _init_system(GlobalState * global_state, SystemModule * module)
 {
     module->duration_start = 0;
@@ -71,10 +83,48 @@ static void _init_system(GlobalState * global_state, SystemModule * module)
     ESP_ERROR_CHECK(i2c_master_init());
     ESP_LOGI(TAG, "I2C initialized successfully");
 
+    #if CONFIG_BITAXE2_A
+    //assess the PGOOD signal
+    gpio_set_direction(GPIO_NUM_11, GPIO_MODE_INPUT);
+    if(gpio_get_level(GPIO_NUM_11) == 1)
+    {
+        ESP_LOGI(TAG, "TPS40305 returns output is good for the converter.");
+    }
+    else
+    {
+        ESP_LOGE(TAG, "TPS40305 fails.");
+    }
+    #endif
+
     ADC_init();
 
     // DS4432U tests
     DS4432U_set_vcore(nvs_config_get_u16(NVS_CONFIG_ASIC_VOLTAGE, CONFIG_ASIC_VOLTAGE) / 1000.0);
+
+    #if CONFIG_BITAXE2_A
+    //enable the TPS40305
+    gpio_set_direction(GPIO_NUM_14, GPIO_MODE_OUTPUT);
+    turnON_Vcore();
+    #endif
+
+    //verify if the core voltage is valid before starting
+    uint16_t count = 10;
+    int16_t vcore = 0;
+    while (count > 0)
+    {
+        vcore += ADC_get_vcore()/10;
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+        count--;
+    }
+
+    //verify core voltage
+    if (abs(vcore - CONFIG_ASIC_VOLTAGE) > 150)
+    {
+        ESP_LOGE(TAG, "Wrong core voltage: %.3fv" ,(float) (vcore/1000.0));
+        //NOTE - the exit function will halt the firmware and avoid start it
+        exit(EXIT_FAILURE);
+    }
+    ESP_LOGI(TAG, "Core voltage: %.3fv" ,(float) (vcore/1000.0));
 
     // Fan Tests
     EMC2101_init(nvs_config_get_u16(NVS_CONFIG_INVERT_FAN_POLARITY, 1));
@@ -109,6 +159,7 @@ static void _update_hashrate(GlobalState * GLOBAL_STATE)
     memset(module->oled_buf, 0, 20);
     snprintf(module->oled_buf, 20, "Gh%s: %.1f W/Th: %.1f", module->historical_hashrate_init < HISTORY_LENGTH ? "*" : "",
              module->current_hashrate, efficiency);
+    ESP_LOGI(TAG, "%s",module->oled_buf);
     OLED_writeString(0, 0, module->oled_buf);
 }
 
