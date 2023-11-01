@@ -124,89 +124,71 @@ static void _set_chip_address(uint8_t chipAddr)
 void BM1397_send_hash_frequency(float frequency)
 {
 
-    unsigned char prefreq1[9] = {0x00, 0x70, 0x0F, 0x0F, 0x0F, 0x00}; // prefreq - pll0_divider
+    uint8_t prefreq1[6] = {0x00, 0x70, 0x0F, 0x0F, 0x0F, 0x00}; //prefreq - pll0_divider
 
-    // default 200Mhz if it fails
-    unsigned char freqbuf[9] = {0x00, 0x08, 0x40, 0xA0, 0x02, 0x25}; // freqbuf - pll0_parameter
+	// default 200Mhz if it fails
+    uint8_t freqbuf[6] = {0x00, 0x08, 0x40, 0xA0, 0x02, 0x25}; //freqbuf - pll0_parameter
 
-    float deffreq = 200.0;
 
-    float fa, fb, fc1, fc2, newf;
-    float f1, basef, famax = 0xf0, famin = 0x10;
-    int i;
+	uint16_t FBDIV, newf;
+    uint8_t  REFDIV, POSTDIV1, POSTDIV2;
+	float FPLL0, basef;
 
-    // bound the frequency setting
-    //  You can go as low as 13 but it doesn't really scale or
-    //  produce any nonces
-    if (frequency < 50)
-    {
-        f1 = 50;
-    }
-    else if (frequency > 500)
-    {
-        f1 = 500;
-    }
-    else
-    {
-        f1 = frequency;
+    uint8_t PLLDIV0 = 0;
+
+    //bound the frequency setting
+    // You can go as low as 13 but it doesn't really scale or
+    // produce any nonces
+    if (frequency < 50) {
+        FPLL0 = 50;
+    } else if (frequency > 580) {
+        FPLL0 = 580;
+    } else {
+        FPLL0 = frequency;
     }
 
-    fb = 2;
-    fc1 = 1;
-    fc2 = 5; // initial multiplier of 10
-    if (f1 >= 500)
-    {
-        // halve down to '250-400'
-        fb = 1;
-    }
-    else if (f1 <= 150)
-    {
-        // triple up to '300-450'
-        fc1 = 3;
-    }
-    else if (f1 <= 250)
-    {
-        // double up to '300-500'
-        fc1 = 2;
-    }
-    // else f1 is 250-500
 
-    // f1 * fb * fc1 * fc2 is between 2500 and 5000
-    // - so round up to the next 25 (freq_mult)
-    basef = FREQ_MULT * ceil(f1 * fb * fc1 * fc2 / FREQ_MULT);
+	REFDIV = 2; POSTDIV1 = 1; POSTDIV2 = 5; // initial multiplier of 10
+	if (FPLL0 >= 500) {
+		// halve down to '250-400'
+        REFDIV = 1;
+		POSTDIV2 = 4;
+	} else if (FPLL0 <= 100) {
+        POSTDIV1 = 5;
+	} else if (FPLL0 <= 150) {
+		// triple up to '300-450'
+		POSTDIV1 = 3;
+	} else if (FPLL0 <= 250) {
+		// double up to '300-500'
+		POSTDIV1 = 2;
+	}
 
-    // fa should be between 100 (0x64) and 200 (0xC8)
-    fa = basef / FREQ_MULT;
+	// FPLL0 * REFDIV * POSTDIV1 * POSTDIV2 is between 2500 and 5000
+    // round up to the next 25 (freq_mult)
+	basef = FREQ_MULT * ceil(FPLL0 * REFDIV * POSTDIV1 * POSTDIV2 / FREQ_MULT);
 
-    // code failure ... basef isn't 400 to 6000
-    if (fa < famin || fa > famax)
-    {
-        newf = deffreq;
-    }
-    else
-    {
-        freqbuf[3] = (int)fa;
-        freqbuf[4] = (int)fb;
-        // fc1, fc2 'should' already be 1..15
-        freqbuf[5] = (((int)fc1 & 0xf) << 4) + ((int)fc2 & 0xf);
+	// FBDIV should be between 100 (0x64) and 200 (0xC8)
+	FBDIV = (basef / FREQ_MULT);
 
-        newf = basef / ((float)fb * (float)fc1 * (float)fc2);
-    }
+    // if ((FBDIV < 100) || (FBDIV > 200))
+    // {
+    //     ESP_LOGE(TAG, "Fail to calculate the FBDIV value.");
+    //     return;
+    // }
 
-    for (i = 0; i < 2; i++)
-    {
-        vTaskDelay(10 / portTICK_PERIOD_MS);
-        _send_BM1397((TYPE_CMD | GROUP_ALL | CMD_WRITE), prefreq1, 6, false);
-    }
-    for (i = 0; i < 2; i++)
-    {
-        vTaskDelay(10 / portTICK_PERIOD_MS);
-        _send_BM1397((TYPE_CMD | GROUP_ALL | CMD_WRITE), freqbuf, 6, false);
-    }
 
-    vTaskDelay(10 / portTICK_PERIOD_MS);
+    freqbuf[3] = FBDIV;
+    freqbuf[4] = REFDIV;
+    freqbuf[5] = ((POSTDIV1 & 0x07) << 4) + (POSTDIV2 & 0x07);
 
-    ESP_LOGI(TAG, "Setting Frequency to %.2fMHz (%.2f)", frequency, newf);
+    newf = basef / ((float)REFDIV * (float)POSTDIV1 * (float)POSTDIV2);
+
+    //NOTE - if it fails to send, the power management task will send another request soon
+    _send_BM1397((TYPE_CMD | GROUP_ALL | CMD_WRITE), prefreq1, 6, false);
+    _send_BM1397((TYPE_CMD | GROUP_ALL | CMD_WRITE), freqbuf, 6, false);
+
+    ESP_LOGI(TAG, "Setting Frequency to %.2fMHz (%d)", frequency, newf);
+
 }
 
 static void _send_init(u_int64_t frequency)
@@ -483,7 +465,7 @@ task_result *BM1397_proccess_work(void *pvParameters)
 
     if (asic_result == NULL)
     {
-        ESP_LOGI(TAG, "return null");
+        ESP_LOGW(TAG, "return null");
         return NULL;
     }
     ESP_LOGI(TAG, "return not null");
@@ -497,7 +479,7 @@ task_result *BM1397_proccess_work(void *pvParameters)
     GlobalState *GLOBAL_STATE = (GlobalState *)pvParameters;
     if (GLOBAL_STATE->valid_jobs[rx_job_id] == 0)
     {
-        ESP_LOGI(TAG, "Invalid job nonce found, id=%d", rx_job_id);
+        ESP_LOGW(TAG, "Invalid job nonce found, id=%d", rx_job_id);
         return NULL;
     }
 
