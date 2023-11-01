@@ -1,135 +1,160 @@
-#include "DS4432U.h"
-#include "EMC2101.h"
-#include "INA260.h"
-#include "bm1397.h"
+#include "global_state.h"
+#include <string.h>
 #include "esp_log.h"
+#include "mining.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "global_state.h"
+#include "bm1397.h"
+#include "EMC2101.h"
+#include "INA260.h"
 #include "math.h"
-#include "mining.h"
-#include "nvs_config.h"
 #include "serial.h"
-#include <string.h>
+#include "adc.h"
 
-#define POLL_RATE 5000
+#define POLL_RATE 100
 #define MAX_TEMP 90.0
-#define THROTTLE_TEMP 75.0
+#define THROTTLE_TEMP 80.0
 #define THROTTLE_TEMP_RANGE (MAX_TEMP - THROTTLE_TEMP)
 
-#define VOLTAGE_START_THROTTLE 4900
-#define VOLTAGE_MIN_THROTTLE 3500
-#define VOLTAGE_RANGE (VOLTAGE_START_THROTTLE - VOLTAGE_MIN_THROTTLE)
+#define MIN_VOLTAGE             5000
+
+#define ASIC_MODEL              CONFIG_ASIC_MODEL
+#define MAX_CURRENT             CONFIG_ASIC_CURRENT
+          
 
 static const char * TAG = "power_management";
 
 static float _fbound(float value, float lower_bound, float upper_bound)
 {
-    if (value < lower_bound)
-        return lower_bound;
-    if (value > upper_bound)
-        return upper_bound;
+	if (value < lower_bound)
+		return lower_bound;
+	if (value > upper_bound)
+		return upper_bound;
 
-    return value;
+	return value;
 }
 
-void POWER_MANAGEMENT_task(void * pvParameters)
+/************************************************************************************************************
+ *  @brief Sample the sensor in a regular interval. It also apply a recursive average filter 
+ * 
+ *  @param [in] pvParameters
+ * 
+ *  @return none
+************************************************************************************************************/
+void Sensor_task(void * pvParameters)
 {
 
-    GlobalState * GLOBAL_STATE = (GlobalState *) pvParameters;
-
+    GlobalState *GLOBAL_STATE = (GlobalState*)pvParameters;
     PowerManagementModule * power_management = &GLOBAL_STATE->POWER_MANAGEMENT_MODULE;
 
-    power_management->frequency_multiplier = 1;
+    const float alpha = 0.95;
+    const float beta  = 0.05;
 
-    int last_frequency_increase = 0;
+    power_management->voltage   = INA260_read_voltage();
+    power_management->power     = INA260_read_power() / 1000;
+    power_management->current   = INA260_read_current();
+    power_management->fan_speed = EMC2101_get_fan_speed();
+    power_management->chip_temp = EMC2101_get_external_temp();
+    power_management->vcore     = ADC_get_vcore();
 
-    bool read_power = INA260_installed();
-
-    uint16_t frequency_target = nvs_config_get_u16(NVS_CONFIG_ASIC_FREQ, CONFIG_ASIC_FREQUENCY);
-
-    vTaskDelay(2000);
-
-    while (1) {
-
-        if (read_power == true) {
-            power_management->voltage = INA260_read_voltage();
-            power_management->power = INA260_read_power() / 1000;
-            power_management->current = INA260_read_current();
-        }
-        power_management->fan_speed = EMC2101_get_fan_speed();
-
-        if (strcmp(GLOBAL_STATE->asic_model, "BM1397") == 0) {
-
-            power_management->chip_temp = EMC2101_get_external_temp();
-
-            // Voltage
-            // We'll throttle between 4.9v and 3.5v
-            float voltage_multiplier =
-                _fbound((power_management->voltage - VOLTAGE_MIN_THROTTLE) * (1 / (float) VOLTAGE_RANGE), 0, 1);
-
-            // Temperature
-            float temperature_multiplier = 1;
-            float over_temp = -(THROTTLE_TEMP - power_management->chip_temp);
-            if (over_temp > 0) {
-                temperature_multiplier = (THROTTLE_TEMP_RANGE - over_temp) / THROTTLE_TEMP_RANGE;
-            }
-
-            float lowest_multiplier = 1;
-            float multipliers[2] = {voltage_multiplier, temperature_multiplier};
-
-            for (int i = 0; i < 2; i++) {
-                if (multipliers[i] < lowest_multiplier) {
-                    lowest_multiplier = multipliers[i];
-                }
-            }
-
-            power_management->frequency_multiplier = lowest_multiplier;
-
-            float target_frequency = _fbound(power_management->frequency_multiplier * frequency_target, 0, frequency_target);
-
-            if (target_frequency < 50) {
-                // TODO: Turn the chip off
-            }
-
-            // chip is coming back from a low/no voltage event
-            if (power_management->frequency_value < 50 && target_frequency > 50) {
-                // TODO recover gracefully?
-                esp_restart();
-            }
-
-            if (power_management->frequency_value > target_frequency) {
-                power_management->frequency_value = target_frequency;
-                last_frequency_increase = 0;
-                BM1397_send_hash_frequency(power_management->frequency_value);
-                ESP_LOGI(TAG, "target %f, Freq %f, Temp %f, Power %f", target_frequency, power_management->frequency_value,
-                         power_management->chip_temp, power_management->power);
-            } else {
-                if (last_frequency_increase > 120 && power_management->frequency_value != frequency_target) {
-                    float add = (target_frequency + power_management->frequency_value) / 2;
-                    power_management->frequency_value += _fbound(add, 2, 20);
-                    BM1397_send_hash_frequency(power_management->frequency_value);
-                    ESP_LOGI(TAG, "target %f, Freq %f, Temp %f, Power %f", target_frequency, power_management->frequency_value,
-                             power_management->chip_temp, power_management->power);
-                    last_frequency_increase = 60;
-                } else {
-                    last_frequency_increase++;
-                }
-            }
-        } else if (strcmp(GLOBAL_STATE->asic_model, "BM1366") == 0) {
-            power_management->chip_temp = EMC2101_get_internal_temp() + 5;
-
-            if (power_management->chip_temp > THROTTLE_TEMP &&
-                (power_management->frequency_value > 50 || power_management->voltage > 1000)) {
-                ESP_LOGE(TAG, "OVERHEAT");
-                nvs_config_set_u16(NVS_CONFIG_ASIC_VOLTAGE, 990);
-                nvs_config_set_u16(NVS_CONFIG_ASIC_FREQ, 50);
-                exit(EXIT_FAILURE);
-            }
-        }
-
-        // ESP_LOGI(TAG, "target %f, Freq %f, Volt %f, Power %f", target_frequency, power_management->frequency_value,
-        // power_management->voltage, power_management->power);
+    while (1)
+    {    
+        power_management->voltage   = alpha*power_management->voltage     +   beta*INA260_read_voltage();
+        power_management->power     = alpha*power_management->power       +   beta*INA260_read_power() / 1000;
+        power_management->current   = alpha*power_management->current     +   beta*INA260_read_current();
+        power_management->fan_speed = alpha*power_management->fan_speed   +   beta*EMC2101_get_fan_speed();
+        power_management->chip_temp = alpha*power_management->chip_temp   +   beta*EMC2101_get_external_temp();
+        power_management->vcore     = alpha*power_management->vcore       +   beta*ADC_get_vcore();
         vTaskDelay(POLL_RATE / portTICK_PERIOD_MS);
+    }
+
+}
+
+/************************************************************************************************************
+ *  @brief Main power task. This task manage the BM1397 to keep its power consumption, clock and temperature 
+ *         with the limits
+ * 
+ *  @param [in] pvParameters
+ * 
+ *  @return none
+************************************************************************************************************/
+void POWER_MANAGEMENT_task(void * pvParameters){
+
+    GlobalState *GLOBAL_STATE = (GlobalState*)pvParameters;
+    PowerManagementModule * power_management = &GLOBAL_STATE->POWER_MANAGEMENT_MODULE;
+    SystemModule *module = &GLOBAL_STATE->SYSTEM_MODULE;
+
+
+    float voltage_multiplier = 0;
+    float current_multiplier = ((float)power_management->frequency_value)/CONFIG_ASIC_FREQUENCY; //get the multiplier value that matches to the initial value
+    float power_multiplier = ((float)power_management->frequency_value)/CONFIG_ASIC_FREQUENCY; //get the multiplier value that matches to the initial value
+
+    float current_error = 0;
+    float current_error_old = 0;
+    float current_integral = 0;
+    float current_setpoint;
+
+    float voltage_error = 0;
+    float last_frequency_increase = 0;
+    float target_frequency;
+
+    power_management->power_setpoint = CONFIG_ASIC_POWER/1000.0;
+    float power_error;
+
+    float temp_setpoint = MAX_TEMP;
+    float temp_error;
+    float temp_error_old = 0;
+    float temp_MV = 0;
+
+
+    if(strcmp(ASIC_MODEL, "BM1397") != 0){
+        ESP_LOGE(TAG, "Power task wasn't desing for the current BM ASIC");
+        while(1);
+    }
+    
+    while(1)
+    {
+        
+        //Closed loop control
+        // voltage_error = MIN_VOLTAGE - power_management->voltage;
+        // voltage_multiplier = voltage_multiplier + voltage_error*0.00001;
+        // voltage_multiplier = _fbound(voltage_multiplier, 0, 1);
+
+        if (power_management->chip_temp > temp_setpoint )
+        {
+            ESP_LOGE(TAG, "Over Temperature %0.2fc", power_management->chip_temp);
+        }
+
+        temp_error = temp_setpoint - power_management->chip_temp;
+        temp_MV = temp_MV + (temp_error-temp_error_old)*2 + temp_error*0.01;
+        temp_error_old = temp_error;
+        temp_MV = _fbound(temp_MV, -power_management->power_setpoint, 0);
+
+        power_error = (power_management->power_setpoint + temp_MV) - power_management->power;
+        power_multiplier = power_multiplier +  power_error*0.002;
+        power_multiplier = _fbound(power_multiplier, 0, 1);
+
+        //Closed-cascade loop control
+        // current_error = MAX_CURRENT - power_management->current;
+        // current_multiplier = current_multiplier +  current_error*0.00001;
+        // current_multiplier = _fbound(current_multiplier, 0, 1);
+
+
+        power_management->frequency_multiplier = power_multiplier;
+
+        target_frequency = _fbound(power_management->frequency_multiplier * CONFIG_ASIC_FREQUENCY, 25, CONFIG_ASIC_FREQUENCY);
+
+        power_management->frequency_value = target_frequency;
+
+        if (fabs(last_frequency_increase - target_frequency) > 2)
+        {
+            last_frequency_increase = target_frequency;
+            ESP_LOGI(TAG, "target %f, Freq %f, Temp %f, Power %f", target_frequency, power_management->frequency_value, power_management->chip_temp, power_management->power);
+            BM1397_send_hash_frequency(target_frequency);
+            
+        }
+
+        //ESP_LOGI(TAG, "target %f, Freq %f, Volt %f, Power %f", target_frequency, power_management->frequency_value, power_management->voltage, power_management->power);
+        vTaskDelay(500 / portTICK_PERIOD_MS);
     }
 }

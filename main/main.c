@@ -26,9 +26,9 @@ void app_main(void)
     ESP_ERROR_CHECK(nvs_flash_init());
 
     ESP_LOGI(TAG, "NVS_CONFIG_ASIC_FREQ %f", (float) nvs_config_get_u16(NVS_CONFIG_ASIC_FREQ, CONFIG_ASIC_FREQUENCY));
-    GLOBAL_STATE.POWER_MANAGEMENT_MODULE.frequency_value = nvs_config_get_u16(NVS_CONFIG_ASIC_FREQ, CONFIG_ASIC_FREQUENCY);
+    GLOBAL_STATE.POWER_MANAGEMENT_MODULE.frequency_value = 50;//starting frequency
 
-    GLOBAL_STATE.asic_model = nvs_config_get_string(NVS_CONFIG_ASIC_MODEL, "");
+    GLOBAL_STATE.asic_model = nvs_config_get_string(NVS_CONFIG_ASIC_MODEL, CONFIG_ASIC_MODEL);
     if (strcmp(GLOBAL_STATE.asic_model, "BM1366") == 0) {
         ESP_LOGI(TAG, "ASIC: BM1366");
         AsicFunctions ASIC_functions = {.init_fn = BM1366_init,
@@ -106,6 +106,7 @@ void app_main(void)
     GLOBAL_STATE.SYSTEM_MODULE.startup_done = true;
 
     xTaskCreate(USER_INPUT_task, "user input", 8192, (void *) &GLOBAL_STATE, 5, NULL);
+    xTaskCreate(Sensor_task, "Sensor Measurement", 4096, (void*)&GLOBAL_STATE, 2, NULL);
     xTaskCreate(POWER_MANAGEMENT_task, "power mangement", 8192, (void *) &GLOBAL_STATE, 10, NULL);
 
     if (GLOBAL_STATE.ASIC_functions.init_fn != NULL) {

@@ -9,9 +9,12 @@ typedef struct
         float frequency_multiplier;
         float frequency_value;
         float power;
+        float power_setpoint;
         float current;
+        float vcore;
 } PowerManagementModule;
 
 void POWER_MANAGEMENT_task(void *pvParameters);
+void Sensor_task(void * pvParameters);
 
 #endif
