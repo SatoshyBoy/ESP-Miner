@@ -80,7 +80,7 @@
                     </tr>
                     <tr>
                         <td>Frequency:</td>
-                        <td>{{info.frequency}} <small>Mhz</small></td>
+                        <td>{{info.frequency | number: '0.0-0'}} <small>Mhz</small></td>
                     </tr>
                     <tr>
                         <td>Core Voltage:</td>
@@ -96,7 +96,7 @@
                     </tr>
                     <tr>
                         <td>Chip Temperature:</td>
-                        <td>{{info.temp}} <small>C</small></td>
+                        <td>{{info.temp | number: '1.2-2'}} <small>C</small></td>
                     </tr>
                 </table>
 

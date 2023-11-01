@@ -47,7 +47,8 @@ export class EditComponent {
           ssid: [info.ssid, [Validators.required]],
           wifiPass: [info.wifiPass, [Validators.required]],
           coreVoltage: [info.coreVoltage, [Validators.required]],
-          frequency: [info.frequency, [Validators.required]],
+          maxPower: [info.maxPower, [Validators.required]],
+          maxFrequency: [info.maxFrequency, [Validators.required]],
           invertfanpolarity: [info.invertfanpolarity, [Validators.required]],
           fanspeed: [info.fanspeed, [Validators.required]],
         });

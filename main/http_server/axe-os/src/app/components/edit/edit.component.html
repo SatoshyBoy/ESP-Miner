@@ -34,11 +34,16 @@
                 <input formControlName="stratumUser" type="text">
             </div>
 
+            <div class="form-group">
+                <label>Max Power:</label>
+                <input formControlName="maxPower" type="number">
+            </div>
+
             <ng-container *ngIf="!devToolsOpen && ASICModel == eASICModel.BM1366">
 
                 <div class="form-group">
-                    <label>Frequency </label>
-                    <select formControlName="frequency">
+                    <label>Max Frequency </label>
+                    <select formControlName="maxFrequency">
                         <option value="400">400</option>
                         <option value="425">425</option>
                         <option value="450">450</option>
@@ -66,8 +71,8 @@
             <ng-container *ngIf="!devToolsOpen && ASICModel == eASICModel.BM1397">
 
                 <div class="form-group">
-                    <label>Frequency </label>
-                    <select formControlName="frequency">
+                    <label>Max Frequency </label>
+                    <select formControlName="maxFrequency">
                         <option value="400">400</option>
                         <option value="425">425 (default)</option>
                         <option value="450">450</option>

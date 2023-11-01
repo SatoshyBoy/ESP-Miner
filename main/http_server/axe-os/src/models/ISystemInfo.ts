@@ -23,6 +23,8 @@ export interface ISystemInfo {
     stratumURL: string,
     stratumPort: number,
     stratumUser: string,
+    maxPower: number,
+    maxFrequency: number,
     frequency: number,
     version: string,
     invertfanpolarity: number,
