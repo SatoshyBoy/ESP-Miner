@@ -50,6 +50,7 @@ void BM1397_init(u_int64_t frequency);
 void BM1397_send_work(void * GLOBAL_STATE, bm_job * next_bm_job);
 void BM1397_set_job_difficulty_mask(int);
 int BM1397_set_max_baud(void);
+int BM1397_fund_max_baud(void);
 int BM1397_set_default_baud(void);
 void BM1397_send_hash_frequency(float frequency);
 task_result * BM1397_proccess_work(void * GLOBAL_STATE);

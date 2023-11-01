@@ -502,6 +502,8 @@ static void _send_init(uint64_t frequency)
 
     unsigned char init795[11] = {0x55, 0xAA, 0x51, 0x09, 0x00, 0xA4, 0x90, 0x00, 0xFF, 0xFF, 0x1C};
     _send_simple(init795, 11);
+
+    BM1366_set_max_baud();
 }
 
 // reset the BM1366 via the RTS line

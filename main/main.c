@@ -43,7 +43,7 @@ void app_main(void)
         ESP_LOGI(TAG, "ASIC: BM1397");
         AsicFunctions ASIC_functions = {.init_fn = BM1397_init,
                                         .receive_result_fn = BM1397_proccess_work,
-                                        .set_max_baud_fn = BM1397_set_max_baud,
+                                        .set_max_baud_fn = BM1397_fund_max_baud,
                                         .set_difficulty_mask_fn = BM1397_set_job_difficulty_mask,
                                         .send_work_fn = BM1397_send_work};
 

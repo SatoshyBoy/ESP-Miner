@@ -238,7 +238,7 @@ static void _send_init(u_int64_t frequency)
     unsigned char init6[9] = {0x00, FAST_UART_CONFIGURATION, 0x06, 0x00, 0x00, 0x0F}; // init6 - fast_uart_configuration
     _send_BM1397((TYPE_CMD | GROUP_ALL | CMD_WRITE), init6, 6, false);
 
-    BM1397_set_default_baud();
+    BM1397_fund_max_baud();
 
     BM1397_send_hash_frequency(frequency);
 }
@@ -258,12 +258,28 @@ static void _reset(void)
     vTaskDelay(100 / portTICK_PERIOD_MS);
 }
 
-static void _send_read_address(void)
+static bool _send_read_address(void)
 {
 
     unsigned char read_address[2] = {0x00, 0x00};
-    // send serial data
+    //send serial data
     _send_BM1397((TYPE_CMD | GROUP_ALL | CMD_READ), read_address, 2, false);
+
+    int received = SERIAL_rx(asic_response_buffer, 9, 500);
+
+    if (received == 9)
+    {
+        //verify the chip ID    
+        if ((asic_response_buffer[2] == 0x13) && (asic_response_buffer[3] == 0x97))
+        {
+            ESP_LOGI(TAG, "BM1397 Detected!!!!");
+            return true;
+        }
+    }
+
+    ESP_LOGE(TAG, "Fail to receive the chip ID");
+    
+    return false;
 }
 
 void BM1397_init(u_int64_t frequency)
@@ -275,11 +291,14 @@ void BM1397_init(u_int64_t frequency)
     esp_rom_gpio_pad_select_gpio(BM1397_RST_PIN);
     gpio_set_direction(BM1397_RST_PIN, GPIO_MODE_OUTPUT);
 
-    // reset the bm1397
-    _reset();
+    //verify if the BM1397 is prenset
+    do{
 
-    // send the init command
-    _send_read_address();
+        //reset the bm1397
+        _reset();
+
+        //send the init command
+    } while(false==_send_read_address());
 
     _send_init(frequency);
 }
@@ -302,6 +321,60 @@ int BM1397_set_max_baud(void)
     ; // baudrate - misc_control
     _send_BM1397((TYPE_CMD | GROUP_ALL | CMD_WRITE), baudrate, 6, false);
     return 3125000;
+}
+
+/************************************************************************************************************
+ *  @brief This function try to find the fastest baudrate for the serial communication
+ * 
+ *  @param [in] none
+ * 
+ *  @return none
+************************************************************************************************************/
+int BM1397_fund_max_baud(void)
+{
+    float fclock = 25000000 / 8;
+    float baud;
+    uint8_t idx=26;
+    uint8_t valid=26;
+    bool hasValidBaud = false;
+
+
+    unsigned char baudrate[9] = { 0x00, MISC_CONTROL, 0x00, 0x00, 0b01100000, 0b00110001 };; //baudrate - misc_control
+    
+    while(true)
+    {
+        baudrate[4] = 0x60 + idx;
+        _send_BM1397((TYPE_CMD | GROUP_ALL | CMD_WRITE), baudrate, 6, false);
+        baud = fclock / (idx+1);
+        ESP_LOGI(TAG, "Testing baud of %.0f",baud);
+
+        SERIAL_set_baud(baud);
+
+        if (_send_read_address())
+        {
+            ESP_LOGI(TAG, "Success baud of %.0f",baud);
+            hasValidBaud = true;
+            valid = idx;
+            if (idx==0)
+                break;             
+        }
+        else
+        {
+            ESP_LOGE(TAG, "Fail at baud of %.0f",baud);
+        }
+
+        if ((idx == 0) & (hasValidBaud == false))
+        {
+            //it fails to find any valid baudrate. Restart the firmware
+            esp_restart();
+        }
+
+        idx--;
+    }
+
+    baud = fclock / (valid+1);
+
+    return baud;
 }
 
 void BM1397_set_job_difficulty_mask(int difficulty)
