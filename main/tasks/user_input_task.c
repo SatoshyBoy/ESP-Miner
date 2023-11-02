@@ -27,6 +27,6 @@ void USER_INPUT_task(void *pvParameters)
             button_being_pressed = false;
         }
 
-        vTaskDelay(30 / portTICK_PERIOD_MS); // Add delay so that current task does not starve idle task and trigger watchdog timer
+        vTaskDelay(500 / portTICK_PERIOD_MS); // Add delay so that current task does not starve idle task and trigger watchdog timer
     }
 }
