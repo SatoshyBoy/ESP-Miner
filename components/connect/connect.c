@@ -65,11 +65,11 @@ static void event_handler(void * arg, esp_event_base_t event_base, int32_t event
         if (s_retry_num < WIFI_MAXIMUM_RETRY) {
             esp_wifi_connect();
             s_retry_num++;
-            ESP_LOGI(TAG, "Retrying WiFi connection...");
+            ESP_LOGW(TAG, "Retrying WiFi connection...");
             MINER_set_wifi_status(WIFI_RETRYING, s_retry_num);
         } else {
             xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
-            ESP_LOGI(TAG, "Could not connect to WiFi.");
+            ESP_LOGE(TAG, "Could not connect to WiFi.");
             MINER_set_wifi_status(WIFI_CONNECT_FAILED, 0);
         }
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {

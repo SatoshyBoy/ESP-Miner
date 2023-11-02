@@ -57,7 +57,6 @@ typedef struct __attribute__((__packed__))
 static const char *TAG = "bm1397Module";
 
 static uint8_t asic_response_buffer[CHUNK_SIZE];
-static uint32_t prev_nonce = 0;
 static task_result result;
 
 /// @brief
@@ -283,6 +282,7 @@ void BM1397_init(u_int64_t frequency)
     } while(false==_send_read_address());
 
     _send_init(frequency);
+    ESP_LOGI(TAG, "BM1397 Initialized");
 }
 
 // Baud formula = 25M/((denominator+1)*8)
@@ -439,7 +439,7 @@ asic_result *BM1397_receive_work(void)
 
     if (received < 0)
     {
-        ESP_LOGI(TAG, "Error in serial RX");
+        ESP_LOGE(TAG, "Error in serial RX");
         return NULL;
     }
     else if (received == 0)
@@ -450,7 +450,7 @@ asic_result *BM1397_receive_work(void)
 
     if (received != 9 || asic_response_buffer[0] != 0xAA || asic_response_buffer[1] != 0x55)
     {
-        ESP_LOGI(TAG, "Serial RX invalid %i", received);
+        ESP_LOGE(TAG, "Serial RX invalid %i", received);
         ESP_LOG_BUFFER_HEX(TAG, asic_response_buffer, received);
         return NULL;
     }
@@ -470,8 +470,9 @@ task_result *BM1397_proccess_work(void *pvParameters)
     }
     ESP_LOGI(TAG, "return not null");
 
-    uint8_t nonce_found = 0;
-    uint32_t first_nonce = 0;
+    static uint8_t nonce_found = 0;
+    static uint32_t prev_nonce = 0;
+    static uint32_t first_nonce = 0;
 
     uint8_t rx_job_id = asic_result->job_id & 0xfc;
     uint8_t rx_midstate_index = asic_result->job_id & 0x03;
@@ -479,7 +480,7 @@ task_result *BM1397_proccess_work(void *pvParameters)
     GlobalState *GLOBAL_STATE = (GlobalState *)pvParameters;
     if (GLOBAL_STATE->valid_jobs[rx_job_id] == 0)
     {
-        ESP_LOGW(TAG, "Invalid job nonce found, id=%d", rx_job_id);
+        ESP_LOGE(TAG, "Invalid job nonce found, id=%d", rx_job_id);
         return NULL;
     }
 

@@ -135,7 +135,7 @@ static void _init_system(GlobalState * global_state, SystemModule * module)
 
     // oled
     if (!OLED_init()) {
-        ESP_LOGI(TAG, "OLED init failed!");
+        ESP_LOGE(TAG, "OLED init failed!");
     } else {
         ESP_LOGI(TAG, "OLED init success!");
         // clear the oled screen
