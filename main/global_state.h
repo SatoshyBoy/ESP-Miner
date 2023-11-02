@@ -12,6 +12,7 @@
 #include "work_queue.h"
 
 #define STRATUM_USER CONFIG_STRATUM_USER
+#define MAX_JOBS 128
 
 typedef struct
 {
@@ -40,13 +41,15 @@ typedef struct
     int extranonce_2_len;
     int abandon_work;
 
-    uint8_t * valid_jobs;
+    uint8_t valid_jobs[MAX_JOBS];
     pthread_mutex_t valid_jobs_lock;
 
     uint32_t stratum_difficulty;
     uint32_t version_mask;
 
     int sock;
+    
+    uint16_t asic_result_null;
 
 } GlobalState;
 
