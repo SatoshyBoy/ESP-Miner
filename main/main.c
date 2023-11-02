@@ -17,7 +17,7 @@
 #include "stratum_task.h"
 #include "user_input_task.h"
 
-static GlobalState GLOBAL_STATE = {.extranonce_str = NULL, .extranonce_2_len = 0, .abandon_work = 0, .version_mask = 0};
+static GlobalState GLOBAL_STATE = {.extranonce_str = NULL, .extranonce_2_len = 0, .abandon_work = 0, .version_mask = 0, .asic_result_null = 0};
 
 static const char * TAG = "miner";
 
@@ -26,7 +26,7 @@ void app_main(void)
     ESP_ERROR_CHECK(nvs_flash_init());
 
     ESP_LOGI(TAG, "NVS_CONFIG_ASIC_FREQ %f", (float) nvs_config_get_u16(NVS_CONFIG_ASIC_FREQ, CONFIG_ASIC_FREQUENCY));
-    GLOBAL_STATE.POWER_MANAGEMENT_MODULE.frequency_value = 50;//starting frequency
+    GLOBAL_STATE.POWER_MANAGEMENT_MODULE.frequency_value = 50; // starting frequency
 
     GLOBAL_STATE.asic_model = nvs_config_get_string(NVS_CONFIG_ASIC_MODEL, CONFIG_ASIC_MODEL);
     if (strcmp(GLOBAL_STATE.asic_model, "BM1366") == 0) {
@@ -47,12 +47,11 @@ void app_main(void)
                                         .set_difficulty_mask_fn = BM1397_set_job_difficulty_mask,
                                         .send_work_fn = BM1397_send_work};
 
-        uint64_t bm1397_hashrate = GLOBAL_STATE.POWER_MANAGEMENT_MODULE.frequency_value * BM1397_CORE_COUNT * 1000000;
-        GLOBAL_STATE.asic_job_frequency_ms = ((double) NONCE_SPACE / (double) bm1397_hashrate) * 1000;
+        GLOBAL_STATE.asic_job_frequency_ms = BM1397_FULLSCAN_MS;
 
         GLOBAL_STATE.ASIC_functions = ASIC_functions;
     } else {
-        ESP_LOGI(TAG, "Invalid ASIC model");
+        ESP_LOGE(TAG, "Invalid ASIC model");
         AsicFunctions ASIC_functions = {.init_fn = NULL,
                                         .receive_result_fn = NULL,
                                         .set_max_baud_fn = NULL,
@@ -107,16 +106,16 @@ void app_main(void)
 
     xTaskCreate(USER_INPUT_task, "user input", 8192, (void *) &GLOBAL_STATE, 5, NULL);
     xTaskCreate(Sensor_task, "Sensor Measurement", 4096, (void*)&GLOBAL_STATE, 2, NULL);
-    //give time for rhe sensor task to start
+    //give time for the sensor task to start
     vTaskDelay(100 / portTICK_PERIOD_MS);
-    
+
 
     if (GLOBAL_STATE.ASIC_functions.init_fn != NULL) {
         wifi_softap_off();
 
         queue_init(&GLOBAL_STATE.stratum_queue);
         queue_init(&GLOBAL_STATE.ASIC_jobs_queue);
-        
+
         SERIAL_init();
         (*GLOBAL_STATE.ASIC_functions.init_fn)(GLOBAL_STATE.POWER_MANAGEMENT_MODULE.frequency_value);
 

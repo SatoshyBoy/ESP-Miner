@@ -9,10 +9,10 @@
 
 // static const u_int64_t ASIC_FREQUENCY = CONFIG_ASIC_FREQUENCY;
 static const u_int64_t BM1397_CORE_COUNT = 672;
-// static const u_int64_t BM1397_HASHRATE_S = ASIC_FREQUENCY * BM1397_CORE_COUNT * 1000000;
+static const u_int64_t BM1397_HASHRATE_S = CONFIG_ASIC_FREQUENCY * BM1397_CORE_COUNT * 1000000;
 //  2^32
 static const u_int64_t NONCE_SPACE = 4294967296;
-// static const double BM1397_FULLSCAN_MS = ((double) NONCE_SPACE / (double) BM1397_HASHRATE_S) * 1000;
+static const double BM1397_FULLSCAN_MS = ((double) NONCE_SPACE / (double) BM1397_HASHRATE_S) * 1000;
 
 typedef struct
 {
