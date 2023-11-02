@@ -12,6 +12,7 @@ typedef struct
         float power_setpoint;
         float current;
         float vcore;
+        float efficiency;
 } PowerManagementModule;
 
 void POWER_MANAGEMENT_task(void *pvParameters);

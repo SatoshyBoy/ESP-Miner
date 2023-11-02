@@ -29,4 +29,5 @@ export interface ISystemInfo {
     version: string,
     invertfanpolarity: number,
     fanspeed: number,
+    efficiency: number
 }

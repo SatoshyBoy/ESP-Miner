@@ -51,12 +51,14 @@ void Sensor_task(void * pvParameters)
     const float alpha = 0.95;
     const float beta  = 0.05;
 
+    //initialize the power management variables
     power_management->voltage   = INA260_read_voltage();
     power_management->power     = INA260_read_power() / 1000;
     power_management->current   = INA260_read_current();
     power_management->fan_speed = EMC2101_get_fan_speed();
     power_management->chip_temp = EMC2101_get_external_temp();
     power_management->vcore     = ADC_get_vcore();
+    power_management->efficiency = 0;
 
     while (1)
     {    

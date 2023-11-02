@@ -11,6 +11,7 @@
 #include "led_controller.h"
 #include "nvs_config.h"
 #include "oled.h"
+#include "power_management_task.h"
 
 #include "driver/gpio.h"
 #include "driver/i2c.h"
@@ -83,7 +84,7 @@ static void _init_system(GlobalState * global_state, SystemModule * module)
     ESP_ERROR_CHECK(i2c_master_init());
     ESP_LOGI(TAG, "I2C initialized successfully");
 
-    #if CONFIG_BITAXE2_A
+#if CONFIG_BITAXE2_A
     //assess the PGOOD signal
     gpio_set_direction(GPIO_NUM_11, GPIO_MODE_INPUT);
     if(gpio_get_level(GPIO_NUM_11) == 1)
@@ -94,18 +95,18 @@ static void _init_system(GlobalState * global_state, SystemModule * module)
     {
         ESP_LOGE(TAG, "TPS40305 fails.");
     }
-    #endif
+#endif
 
     ADC_init();
 
     // DS4432U tests
     DS4432U_set_vcore(nvs_config_get_u16(NVS_CONFIG_ASIC_VOLTAGE, CONFIG_ASIC_VOLTAGE) / 1000.0);
 
-    #if CONFIG_BITAXE2_A
+#if CONFIG_BITAXE2_A
     //enable the TPS40305
     gpio_set_direction(GPIO_NUM_14, GPIO_MODE_OUTPUT);
     turnON_Vcore();
-    #endif
+#endif
 
     //verify if the core voltage is valid before starting
     uint16_t count = 10;
@@ -148,17 +149,27 @@ static void _init_system(GlobalState * global_state, SystemModule * module)
 static void _update_hashrate(GlobalState * GLOBAL_STATE)
 {
     SystemModule * module = &GLOBAL_STATE->SYSTEM_MODULE;
+    PowerManagementModule * power_management = &GLOBAL_STATE->POWER_MANAGEMENT_MODULE;
 
     if (module->screen_page != 0) {
         return;
     }
 
-    float efficiency = GLOBAL_STATE->POWER_MANAGEMENT_MODULE.power / (module->current_hashrate / 1000.0);
+    static u_int16_t samples = 0;
+
+    //Moving average filter
+    if(module->current_hashrate > 0.1)
+    {
+        power_management->efficiency = (samples * power_management->efficiency + (GLOBAL_STATE->POWER_MANAGEMENT_MODULE.power / (module->current_hashrate / 1000.0)))/(samples+1);
+
+        if (samples < 100)
+            samples++;
+    }
 
     OLED_clearLine(0);
     memset(module->oled_buf, 0, 20);
     snprintf(module->oled_buf, 20, "Gh%s: %.1f W/Th: %.1f", module->historical_hashrate_init < HISTORY_LENGTH ? "*" : "",
-             module->current_hashrate, efficiency);
+             module->current_hashrate, power_management->efficiency);
     ESP_LOGI(TAG, "%s",module->oled_buf);
     OLED_writeString(0, 0, module->oled_buf);
 }

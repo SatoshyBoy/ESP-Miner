@@ -263,10 +263,11 @@ static esp_err_t GET_system_info(httpd_req_t * req)
 
     cJSON_AddNumberToObject(root, "freeHeap", esp_get_free_heap_size());
     cJSON_AddNumberToObject(root, "coreVoltage", nvs_config_get_u16(NVS_CONFIG_ASIC_VOLTAGE, CONFIG_ASIC_VOLTAGE));
-    cJSON_AddNumberToObject(root, "coreVoltageActual", ADC_get_vcore());
+    cJSON_AddNumberToObject(root, "coreVoltageActual", GLOBAL_STATE->POWER_MANAGEMENT_MODULE.vcore);
     cJSON_AddNumberToObject(root, "maxPower", nvs_config_get_u16(NVS_CONFIG_ASIC_MAXPOWER, CONFIG_ASIC_POWER));
     cJSON_AddNumberToObject(root, "maxFrequency", nvs_config_get_u16(NVS_CONFIG_ASIC_FREQ, CONFIG_ASIC_FREQUENCY));
     cJSON_AddNumberToObject(root, "frequency", GLOBAL_STATE->POWER_MANAGEMENT_MODULE.frequency_value);
+    cJSON_AddNumberToObject(root, "efficiency", GLOBAL_STATE->POWER_MANAGEMENT_MODULE.efficiency);
     cJSON_AddStringToObject(root, "ssid", ssid);
     cJSON_AddStringToObject(root, "wifiPass", wifiPass);
     cJSON_AddStringToObject(root, "wifiStatus", GLOBAL_STATE->SYSTEM_MODULE.wifi_status);

@@ -88,7 +88,7 @@
                     </tr>
                     <tr>
                         <td>Measured Core Voltage:</td>
-                        <td>{{info.coreVoltageActual}} <small>mV</small></td>
+                        <td>{{info.coreVoltageActual | number: '1.2-2'}} <small>mV</small></td>
                     </tr>
                     <tr>
                         <td>Fan Speed:</td>
@@ -111,6 +111,10 @@
                     <tr>
                         <td>Efficiency:</td>
                         <td>{{info.power / (info.hashRate/1000) | number: '1.2-2'}} <small>W/Th</small></td>
+                    </tr>
+                    <tr>
+                        <td>Mean efficiency:</td>
+                        <td>{{info.efficiency | number: '1.2-2'}} <small>W/Th</small></td>
                     </tr>
                     <tr>
                         <td>Best Difficulty:</td>
