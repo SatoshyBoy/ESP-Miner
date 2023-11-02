@@ -194,6 +194,8 @@ static void _send_init(u_int64_t frequency)
 {
 
     // send serial data
+    SERIAL_set_baud(115200);
+
     vTaskDelay(SLEEP_TIME / portTICK_PERIOD_MS);
     _send_chain_inactive();
 
@@ -220,7 +222,7 @@ static void _send_init(u_int64_t frequency)
     _send_BM1397((TYPE_CMD | GROUP_ALL | CMD_WRITE), init6, 6, false);
 
     BM1397_fund_max_baud();
-
+        
     BM1397_send_hash_frequency(frequency);
 }
 
@@ -229,8 +231,8 @@ static void _reset(void)
 {
     gpio_set_level(BM1397_RST_PIN, 0);
 
-    // delay for 100ms
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    // delay for 500ms
+    vTaskDelay(500 / portTICK_PERIOD_MS);
 
     // set the gpio pin high
     gpio_set_level(BM1397_RST_PIN, 1);
@@ -246,7 +248,7 @@ static bool _send_read_address(void)
     //send serial data
     _send_BM1397((TYPE_CMD | GROUP_ALL | CMD_READ), read_address, 2, false);
 
-    int received = SERIAL_rx(asic_response_buffer, 9, 500);
+    int received = SERIAL_rx(asic_response_buffer, 9, 100);
 
     if (received == 9)
     {
@@ -278,10 +280,11 @@ void BM1397_init(u_int64_t frequency)
         //reset the bm1397
         _reset();
 
+        _send_init(frequency);
+
         //send the init command
     } while(false==_send_read_address());
 
-    _send_init(frequency);
     ESP_LOGI(TAG, "BM1397 Initialized");
 }
 
@@ -300,9 +303,9 @@ int BM1397_set_max_baud(void)
     // divider of 0 for 3,125,000
     ESP_LOGI(TAG, "Setting max baud of 3125000");
     unsigned char baudrate[9] = {0x00, MISC_CONTROL, 0x00, 0x00, 0b01100000, 0b00110001};
-    ; // baudrate - misc_control
+    // baudrate - misc_control
     _send_BM1397((TYPE_CMD | GROUP_ALL | CMD_WRITE), baudrate, 6, false);
-    return 3125000;
+return 3125000;
 }
 
 /************************************************************************************************************
@@ -316,7 +319,7 @@ int BM1397_fund_max_baud(void)
 {
     float fclock = 25000000 / 8;
     float baud;
-    uint8_t idx=26;
+    int8_t idx=26;
     uint8_t valid=26;
     bool hasValidBaud = false;
 
@@ -332,13 +335,14 @@ int BM1397_fund_max_baud(void)
 
         SERIAL_set_baud(baud);
 
+        //Giving time for BM1397 to perform the transition.
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+
         if (_send_read_address())
         {
             ESP_LOGI(TAG, "Success baud of %.0f",baud);
             hasValidBaud = true;
-            valid = idx;
-            if (idx==0)
-                break;             
+            valid = idx;           
         }
         else
         {
@@ -352,6 +356,8 @@ int BM1397_fund_max_baud(void)
         }
 
         idx--;
+        if (idx<0)
+            break;  
     }
 
     baud = fclock / (valid+1);
