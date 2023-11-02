@@ -6,6 +6,7 @@
 #include "esp_log.h"
 #include "nvs_config.h"
 #include "utils.h"
+#include "esp_system.h"
 
 const char *TAG = "asic_result";
 
@@ -21,16 +22,22 @@ void ASIC_result_task(void *pvParameters)
 
         task_result *asic_result = (*GLOBAL_STATE->ASIC_functions.receive_result_fn)(GLOBAL_STATE);
 
-        if (asic_result == NULL)
-        {
+        if(asic_result == NULL){
+            GLOBAL_STATE->asic_result_null++;
+            if (GLOBAL_STATE->asic_result_null > 10)
+            {
+                esp_restart();
+            }
+            ESP_LOGW(TAG, "BM returned NULL");
             continue;
         }
+        GLOBAL_STATE->asic_result_null = 0;
 
         uint8_t job_id = asic_result->job_id;
 
         if (GLOBAL_STATE->valid_jobs[job_id] == 0)
         {
-            ESP_LOGI(TAG, "Invalid job nonce found, id=%d", job_id);
+            ESP_LOGE(TAG, "Invalid job nonce found, id=%d", job_id);
         }
 
         // check the nonce difficulty
@@ -42,7 +49,7 @@ void ASIC_result_task(void *pvParameters)
         if(nonce_diff > 0.1)
         ESP_LOGI(TAG, "Nonce difficulty %.2f of %ld.", nonce_diff, GLOBAL_STATE->ASIC_TASK_MODULE.active_jobs[job_id]->pool_diff);
         else
-        ESP_LOGE(TAG, "Nonce difficulty %.2f of %ld.", nonce_diff, GLOBAL_STATE->ASIC_TASK_MODULE.active_jobs[job_id]->pool_diff);
+        ESP_LOGW(TAG, "Nonce difficulty %.2f of %ld.", nonce_diff, GLOBAL_STATE->ASIC_TASK_MODULE.active_jobs[job_id]->pool_diff);
 
         if (nonce_diff > GLOBAL_STATE->ASIC_TASK_MODULE.active_jobs[job_id]->pool_diff)
         {
