@@ -26,7 +26,6 @@ char * nvs_config_get_string(const char * key, const char * default_value)
     char * out = malloc(size);
     if (out == NULL)
     {
-        ESP_LOGE(TAG,"Malloc fails to allocate memory.");
         return strdup(default_value);
     }
     err = nvs_get_str(handle, key, out, &size);

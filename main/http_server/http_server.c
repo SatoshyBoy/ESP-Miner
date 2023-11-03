@@ -18,6 +18,7 @@
 #include <sys/param.h>
 
 #include "dns_server.h"
+#include "esp_heap_trace.h"
 #include "esp_mac.h"
 #include "esp_netif.h"
 #include "esp_ota_ops.h"
@@ -35,6 +36,9 @@ static GlobalState * GLOBAL_STATE;
 static httpd_handle_t server = NULL;
 
 static int fd = -1;
+
+#define NUM_RECORDS 1000
+static heap_trace_record_t trace_record[NUM_RECORDS]; // This buffer must be in internal RAM
 
 #define REST_CHECK(a, str, goto_tag, ...)                                                                                          \
     do {                                                                                                                           \
@@ -239,6 +243,7 @@ static esp_err_t POST_restart(httpd_req_t * req)
 /* Simple handler for getting system handler */
 static esp_err_t GET_system_info(httpd_req_t * req)
 {
+
     httpd_resp_set_type(req, "application/json");
 
     // Add CORS headers
@@ -253,6 +258,11 @@ static esp_err_t GET_system_info(httpd_req_t * req)
     char * stratumUser = nvs_config_get_string(NVS_CONFIG_STRATUM_USER, CONFIG_STRATUM_USER);
 
     cJSON * root = cJSON_CreateObject();
+    if (root == NULL) {
+        ESP_LOGE(TAG, "Fail to allocate memory for root.");
+        return ESP_FAIL;
+    }
+
     cJSON_AddNumberToObject(root, "power", GLOBAL_STATE->POWER_MANAGEMENT_MODULE.power);
     cJSON_AddNumberToObject(root, "voltage", GLOBAL_STATE->POWER_MANAGEMENT_MODULE.voltage);
     cJSON_AddNumberToObject(root, "current", GLOBAL_STATE->POWER_MANAGEMENT_MODULE.current);
@@ -293,11 +303,20 @@ static esp_err_t GET_system_info(httpd_req_t * req)
     free(stratumURL);
     free(stratumUser);
 
+    esp_err_t status;
     const char * sys_info = cJSON_Print(root);
-    httpd_resp_sendstr(req, sys_info);
-    free(sys_info);
+    if (sys_info != NULL) {
+        httpd_resp_sendstr(req, sys_info);
+        free(sys_info);
+        status = ESP_OK;
+    } else {
+        ESP_LOGE(TAG, "Fail to allocate memory for sys_info.");
+        status = ESP_FAIL;
+    }
+
     cJSON_Delete(root);
-    return ESP_OK;
+
+    return status;
 }
 
 esp_err_t POST_WWW_update(httpd_req_t * req)
@@ -389,9 +408,8 @@ esp_err_t POST_OTA_update(httpd_req_t * req)
 void log_to_websocket(const char * format, va_list args)
 {
     char * log_buffer = (char *) malloc(2048);
-    if (log_buffer == NULL)
-    {
-        ESP_LOGE(TAG,"Malloc fails to allocate memory for log_buffer.");
+    if (log_buffer == NULL) {
+        ESP_LOGE(TAG, "Malloc fails to allocate memory for log_buffer.");
         return;
     }
     vsnprintf(log_buffer, 2048, format, args);
@@ -453,6 +471,7 @@ esp_err_t start_rest_server(void * pvParameters)
     strlcpy(rest_context->base_path, base_path, sizeof(rest_context->base_path));
 
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+    config.stack_size = 8192;
     config.uri_match_fn = httpd_uri_match_wildcard;
 
     ESP_LOGI(TAG, "Starting HTTP Server");
