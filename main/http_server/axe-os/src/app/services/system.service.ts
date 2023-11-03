@@ -37,6 +37,7 @@ export class SystemService {
           sharesRejected: 0,
           uptimeSeconds: 38,
           ASICModel: eASICModel.BM1366,
+          PCB_Rev : "",
           stratumURL: "192.168.1.242",
           stratumPort: 3333,
           stratumUser: "bc1q99n3pu025yyu0jlywpmwzalyhm36tg5u37w20d.bitaxe-U1",

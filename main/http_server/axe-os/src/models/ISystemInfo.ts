@@ -20,6 +20,7 @@ export interface ISystemInfo {
     sharesRejected: number,
     uptimeSeconds: number,
     ASICModel: eASICModel,
+    PCB_Rev: string,
     stratumURL: string,
     stratumPort: number,
     stratumUser: string,
