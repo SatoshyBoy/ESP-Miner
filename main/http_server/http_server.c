@@ -389,6 +389,11 @@ esp_err_t POST_OTA_update(httpd_req_t * req)
 void log_to_websocket(const char * format, va_list args)
 {
     char * log_buffer = (char *) malloc(2048);
+    if (log_buffer == NULL)
+    {
+        ESP_LOGE(TAG,"Malloc fails to allocate memory for log_buffer.");
+        return;
+    }
     vsnprintf(log_buffer, 2048, format, args);
 
     httpd_ws_frame_t ws_pkt;

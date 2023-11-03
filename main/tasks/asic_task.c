@@ -17,6 +17,11 @@ void ASIC_task(void *pvParameters)
     GlobalState *GLOBAL_STATE = (GlobalState *)pvParameters;
 
     GLOBAL_STATE->ASIC_TASK_MODULE.active_jobs = malloc(sizeof(bm_job *) * 128);
+    if (GLOBAL_STATE->ASIC_TASK_MODULE.active_jobs == NULL)
+    {
+        ESP_LOGE(TAG,"Malloc fails to allocate memory.");
+        exit(1);
+    }
     for (int i = 0; i < 128; i++)
     {
 

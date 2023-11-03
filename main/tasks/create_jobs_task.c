@@ -31,6 +31,11 @@ void create_jobs_task(void *pvParameters)
             bm_job next_job = construct_bm_job(mining_notification, merkle_root, GLOBAL_STATE->version_mask);
 
             bm_job *queued_next_job = malloc(sizeof(bm_job));
+            if (queued_next_job == NULL)
+            {
+                ESP_LOGE(TAG,"Malloc fails to allocate memory for queued_next_job.");
+                exit(1);
+            }
             memcpy(queued_next_job, &next_job, sizeof(bm_job));
             queued_next_job->extranonce2 = strdup(extranonce_2_str);
             queued_next_job->jobid = strdup(mining_notification->job_id);

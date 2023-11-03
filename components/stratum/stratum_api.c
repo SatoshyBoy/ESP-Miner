@@ -27,13 +27,13 @@ static void debug_stratum_tx(const char *);
 void STRATUM_V1_initialize_buffer()
 {
     json_rpc_buffer = malloc(BUFFER_SIZE);
-    json_rpc_buffer_size = BUFFER_SIZE;
-    memset(json_rpc_buffer, 0, BUFFER_SIZE);
     if (json_rpc_buffer == NULL)
     {
-        printf("Error: Failed to allocate memory for buffer\n");
+        ESP_LOGE(TAG,"Malloc fails to allocate memory for json_rpc_buffer.");
         exit(1);
     }
+    json_rpc_buffer_size = BUFFER_SIZE;
+    memset(json_rpc_buffer, 0, BUFFER_SIZE);
 }
 
 void cleanup_stratum_buffer()
@@ -168,6 +168,11 @@ void STRATUM_V1_parse(StratumApiV1Message *message, const char *stratum_json)
     {
 
         mining_notify *new_work = malloc(sizeof(mining_notify));
+        if (new_work == NULL)
+        {
+            ESP_LOGE(TAG,"Malloc fails to allocate memory for new_work.");
+            exit(1);
+        }
         // new_work->difficulty = difficulty;
         cJSON *params = cJSON_GetObjectItem(json, "params");
         new_work->job_id = strdup(cJSON_GetArrayItem(params, 0)->valuestring);
@@ -183,6 +188,11 @@ void STRATUM_V1_parse(StratumApiV1Message *message, const char *stratum_json)
             abort();
         }
         new_work->merkle_branches = malloc(HASH_SIZE * new_work->n_merkle_branches);
+        if (new_work->merkle_branches == NULL)
+        {
+            ESP_LOGE(TAG,"Malloc fails to allocate memory for new_work->merkle_branches.");
+            exit(1);
+        }
         for (size_t i = 0; i < new_work->n_merkle_branches; i++)
         {
             hex2bin(cJSON_GetArrayItem(merkle_branch, i)->valuestring, new_work->merkle_branches + HASH_SIZE * i, HASH_SIZE * 2);
@@ -259,6 +269,11 @@ int _parse_stratum_subscribe_result_message(const char *result_json_str,
         return -1;
     }
     *extranonce = malloc(strlen(extranonce_json->valuestring) + 1);
+    if (extranonce == NULL)
+    {
+        ESP_LOGE(TAG,"Malloc fails to allocate memory for extranonce.");
+        return -1;
+    }
     strcpy(*extranonce, extranonce_json->valuestring);
 
     cJSON_Delete(root);

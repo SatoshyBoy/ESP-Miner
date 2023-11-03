@@ -4,6 +4,9 @@
 #include "mining.h"
 #include "utils.h"
 #include "mbedtls/sha256.h"
+#include "esp_log.h"
+
+static const char * TAG = "mining";
 
 void free_bm_job(bm_job *job)
 {
@@ -18,6 +21,11 @@ char *construct_coinbase_tx(const char *coinbase_1, const char *coinbase_2,
     int coinbase_tx_len = strlen(coinbase_1) + strlen(coinbase_2) + strlen(extranonce) + strlen(extranonce_2) + 1;
 
     char *coinbase_tx = malloc(coinbase_tx_len);
+    if (coinbase_tx == NULL)
+    {
+        ESP_LOGE(TAG,"Malloc fails to allocate memory for coinbase_tx.");
+        exit(1);
+    }
     strcpy(coinbase_tx, coinbase_1);
     strcat(coinbase_tx, extranonce);
     strcat(coinbase_tx, extranonce_2);
@@ -31,6 +39,11 @@ char *calculate_merkle_root_hash(const char *coinbase_tx, const uint8_t merkle_b
 {
     size_t coinbase_tx_bin_len = strlen(coinbase_tx) / 2;
     uint8_t *coinbase_tx_bin = malloc(coinbase_tx_bin_len);
+    if (coinbase_tx_bin == NULL)
+    {
+        ESP_LOGE(TAG,"Malloc fails to allocate memory for coinbase_tx_bin.");
+        exit(1);
+    }
     hex2bin(coinbase_tx, coinbase_tx_bin, coinbase_tx_bin_len);
 
     uint8_t both_merkles[64];
@@ -47,6 +60,11 @@ char *calculate_merkle_root_hash(const char *coinbase_tx, const uint8_t merkle_b
     }
 
     char *merkle_root_hash = malloc(65);
+    if (merkle_root_hash == NULL)
+    {
+        ESP_LOGE(TAG,"Malloc fails to allocate memory for merkle_root_hash.");
+        exit(1);
+    }
     bin2hex(both_merkles, 32, merkle_root_hash, 65);
     return merkle_root_hash;
 }
@@ -113,6 +131,11 @@ bm_job construct_bm_job(mining_notify *params, const char *merkle_root, const ui
 char *extranonce_2_generate(uint32_t extranonce_2, uint32_t length)
 {
     char *extranonce_2_str = malloc(length * 2 + 1);
+    if (extranonce_2_str == NULL)
+    {
+        ESP_LOGE(TAG,"Malloc fails to allocate memory for extranonce_2_str.");
+        exit(1);
+    }
     memset(extranonce_2_str, '0', length * 2);
     extranonce_2_str[length * 2] = '\0';
     bin2hex((uint8_t *)&extranonce_2, sizeof(extranonce_2), extranonce_2_str, length * 2 + 1);

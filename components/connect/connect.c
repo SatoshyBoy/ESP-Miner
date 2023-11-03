@@ -119,7 +119,7 @@ void toggle_wifi_softap(void)
     ESP_ERROR_CHECK(esp_wifi_get_mode(&mode));
 
     if (mode == WIFI_MODE_APSTA) {
-        ESP_LOGI(TAG, "ESP_WIFI Access Point Off");
+        ESP_LOGW(TAG, "ESP_WIFI Access Point Off");
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     } else {
         ESP_LOGI(TAG, "ESP_WIFI Access Point On");
@@ -129,7 +129,7 @@ void toggle_wifi_softap(void)
 
 void wifi_softap_off(void)
 {
-    ESP_LOGI(TAG, "ESP_WIFI Access Point Off");
+    ESP_LOGW(TAG, "ESP_WIFI Access Point Off");
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
 }
 

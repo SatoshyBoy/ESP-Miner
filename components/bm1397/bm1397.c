@@ -71,6 +71,11 @@ static void _send_BM1397(uint8_t header, uint8_t *data, uint8_t data_len, bool d
 
     // allocate memory for buffer
     unsigned char *buf = malloc(total_length);
+    if (buf == NULL)
+    {
+        ESP_LOGE(TAG,"Malloc fails to allocate memory for buf.");
+        exit(1);
+    }
 
     // add the preamble
     buf[0] = 0x55;

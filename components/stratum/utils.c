@@ -4,6 +4,9 @@
 #include <stdio.h>
 
 #include "mbedtls/sha256.h"
+#include "esp_log.h"
+
+static const char* TAG = "utils";
 
 #ifndef bswap_16
 #define bswap_16(a) ((((uint16_t)(a) << 8) & 0xff00) | (((uint16_t)(a) >> 8) & 0xff))
@@ -169,6 +172,11 @@ char *double_sha256(const char *hex_string)
 {
     size_t bin_len = strlen(hex_string) / 2;
     uint8_t *bin = malloc(bin_len);
+    if (bin == NULL)
+    {
+        ESP_LOGE(TAG,"Malloc fails to allocate memory for bin.");
+        exit(1);
+    }
     hex2bin(hex_string, bin, bin_len);
 
     unsigned char first_hash_output[32], second_hash_output[32];
@@ -179,6 +187,11 @@ char *double_sha256(const char *hex_string)
     free(bin);
 
     char *output_hash = malloc(64 + 1);
+    if (output_hash == NULL)
+    {
+        ESP_LOGE(TAG,"Malloc fails to allocate memory for output_hash.");
+        exit(1);
+    }
     bin2hex(second_hash_output, 32, output_hash, 65);
     return output_hash;
 }
@@ -187,6 +200,11 @@ uint8_t *double_sha256_bin(const uint8_t *data, const size_t data_len)
 {
     uint8_t first_hash_output[32];
     uint8_t *second_hash_output = malloc(32);
+    if (second_hash_output == NULL)
+    {
+        ESP_LOGE(TAG,"Malloc fails to allocate memory for second_hash_output.");
+        exit(1);
+    }
 
     mbedtls_sha256(data, data_len, first_hash_output, 0);
     mbedtls_sha256(first_hash_output, 32, second_hash_output, 0);
