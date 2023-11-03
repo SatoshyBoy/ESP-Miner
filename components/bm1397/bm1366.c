@@ -639,7 +639,7 @@ asic_result * BM1366_receive_work(void)
     int received = SERIAL_rx(asic_response_buffer, 11, 60000);
 
     if (received < 0) {
-        ESP_LOGI(TAG, "Error in serial RX");
+        ESP_LOGE(TAG, "Error in serial RX");
         return NULL;
     } else if (received == 0) {
         // Didn't find a solution, restart and try again
@@ -647,7 +647,7 @@ asic_result * BM1366_receive_work(void)
     }
 
     if (received != 11 || asic_response_buffer[0] != 0xAA || asic_response_buffer[1] != 0x55) {
-        ESP_LOGI(TAG, "Serial RX invalid %i", received);
+        ESP_LOGE(TAG, "Serial RX invalid %i", received);
         ESP_LOG_BUFFER_HEX(TAG, asic_response_buffer, received);
         return NULL;
     }

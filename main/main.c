@@ -84,7 +84,7 @@ void app_main(void)
 
         strncpy(GLOBAL_STATE.SYSTEM_MODULE.wifi_status, "Failed to connect", 20);
         // User might be trying to configure with AP, just chill here
-        ESP_LOGI(TAG, "Finished, waiting for user input.");
+        ESP_LOGW(TAG, "Finished, waiting for user input.");
         while (1) {
             vTaskDelay(1000 / portTICK_PERIOD_MS);
         }
@@ -92,7 +92,7 @@ void app_main(void)
         ESP_LOGE(TAG, "UNEXPECTED EVENT");
         strncpy(GLOBAL_STATE.SYSTEM_MODULE.wifi_status, "unexpected error", 20);
         // User might be trying to configure with AP, just chill here
-        ESP_LOGI(TAG, "Finished, waiting for user input.");
+        ESP_LOGW(TAG, "Finished, waiting for user input.");
         while (1) {
             vTaskDelay(1000 / portTICK_PERIOD_MS);
         }

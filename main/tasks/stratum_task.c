@@ -119,7 +119,7 @@ void stratum_task(void *pvParameters)
                 SYSTEM_notify_new_ntime(&GLOBAL_STATE->SYSTEM_MODULE, stratum_api_v1_message.mining_notification->ntime);
                 if (stratum_api_v1_message.should_abandon_work && (GLOBAL_STATE->stratum_queue.count > 0 || GLOBAL_STATE->ASIC_jobs_queue.count > 0))
                 {
-                    ESP_LOGI(TAG, "abandoning work");
+                    ESP_LOGW(TAG, "abandoning work");
 
                     GLOBAL_STATE->abandon_work = 1;
                     queue_clear(&GLOBAL_STATE->stratum_queue);
