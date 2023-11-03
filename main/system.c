@@ -85,14 +85,11 @@ static void _init_system(GlobalState * global_state, SystemModule * module)
     ESP_LOGI(TAG, "I2C initialized successfully");
 
 #if CONFIG_BITAXE2_A
-    //assess the PGOOD signal
+    // assess the PGOOD signal
     gpio_set_direction(GPIO_NUM_11, GPIO_MODE_INPUT);
-    if(gpio_get_level(GPIO_NUM_11) == 1)
-    {
+    if (gpio_get_level(GPIO_NUM_11) == 1) {
         ESP_LOGI(TAG, "TPS40305 returns output is good for the converter.");
-    }
-    else
-    {
+    } else {
         ESP_LOGE(TAG, "TPS40305 fails.");
     }
 #endif
@@ -103,29 +100,27 @@ static void _init_system(GlobalState * global_state, SystemModule * module)
     DS4432U_set_vcore(nvs_config_get_u16(NVS_CONFIG_ASIC_VOLTAGE, CONFIG_ASIC_VOLTAGE) / 1000.0);
 
 #if CONFIG_BITAXE2_A
-    //enable the TPS40305
+    // enable the TPS40305
     gpio_set_direction(GPIO_NUM_14, GPIO_MODE_OUTPUT);
     turnON_Vcore();
 #endif
 
-    //verify if the core voltage is valid before starting
+    // verify if the core voltage is valid before starting
     uint16_t count = 10;
     int16_t vcore = 0;
-    while (count > 0)
-    {
-        vcore += ADC_get_vcore()/10;
+    while (count > 0) {
+        vcore += ADC_get_vcore() / 10;
         vTaskDelay(100 / portTICK_PERIOD_MS);
         count--;
     }
 
-    //verify core voltage
-    if (abs(vcore - CONFIG_ASIC_VOLTAGE) > 150)
-    {
-        ESP_LOGE(TAG, "Wrong core voltage: %.3fv" ,(float) (vcore/1000.0));
-        //NOTE - the exit function will halt the firmware and avoid start it
+    // verify core voltage
+    if (abs(vcore - CONFIG_ASIC_VOLTAGE) > 150) {
+        ESP_LOGE(TAG, "Wrong core voltage: %.3fv", (float) (vcore / 1000.0));
+        // NOTE - the exit function will halt the firmware and avoid start it
         exit(EXIT_FAILURE);
     }
-    ESP_LOGI(TAG, "Core voltage: %.3fv" ,(float) (vcore/1000.0));
+    ESP_LOGI(TAG, "Core voltage: %.3fv", (float) (vcore / 1000.0));
 
     // Fan Tests
     EMC2101_init(nvs_config_get_u16(NVS_CONFIG_INVERT_FAN_POLARITY, 1));
@@ -157,10 +152,11 @@ static void _update_hashrate(GlobalState * GLOBAL_STATE)
 
     static u_int16_t samples = 0;
 
-    //Moving average filter
-    if(module->current_hashrate > 0.1)
-    {
-        power_management->efficiency = (samples * power_management->efficiency + (GLOBAL_STATE->POWER_MANAGEMENT_MODULE.power / (module->current_hashrate / 1000.0)))/(samples+1);
+    // Moving average filter
+    if (module->current_hashrate > 0.1) {
+        power_management->efficiency = (samples * power_management->efficiency +
+                                        (GLOBAL_STATE->POWER_MANAGEMENT_MODULE.power / (module->current_hashrate / 1000.0))) /
+                                       (samples + 1);
 
         if (samples < 100)
             samples++;
@@ -170,7 +166,7 @@ static void _update_hashrate(GlobalState * GLOBAL_STATE)
     memset(module->oled_buf, 0, 20);
     snprintf(module->oled_buf, 20, "Gh%s: %.1f W/Th: %.1f", module->historical_hashrate_init < HISTORY_LENGTH ? "*" : "",
              module->current_hashrate, power_management->efficiency);
-    ESP_LOGI(TAG, "%s",module->oled_buf);
+    ESP_LOGI(TAG, "%s", module->oled_buf);
     OLED_writeString(0, 0, module->oled_buf);
 }
 
@@ -339,7 +335,7 @@ static void _check_for_best_diff(SystemModule * module, double diff, uint32_t nb
     uint64_t old = module->best_nonce_diff;
     module->best_nonce_diff = diff;
     // only write to flash if new > old
-    if(module->best_nonce_diff > old) {
+    if (module->best_nonce_diff > old) {
         nvs_config_set_u64(NVS_CONFIG_BEST_DIFF, module->best_nonce_diff);
     }
     // make the best_nonce_diff into a string
@@ -522,8 +518,6 @@ void SYSTEM_notify_found_nonce(SystemModule * module, double pool_diff, double f
         // More smoothing
         module->current_hashrate = ((module->current_hashrate * 9) + rolling_rate) / 10;
     }
-
-    _update_hashrate(module);
 
     // logArrayContents(historical_hashrate, HISTORY_LENGTH);
     // logArrayContents(historical_hashrate_time_stamps, HISTORY_LENGTH);
