@@ -18,6 +18,7 @@ export interface ISystemInfo {
     wifiStatus: string,
     sharesAccepted: number,
     sharesRejected: number,
+    SessionID: string,
     uptimeSeconds: number,
     ASICModel: eASICModel,
     PCB_Rev: string,

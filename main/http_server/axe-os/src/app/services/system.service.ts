@@ -35,6 +35,7 @@ export class SystemService {
           wifiStatus: "Connected!",
           sharesAccepted: 1,
           sharesRejected: 0,
+          SessionID: "",
           uptimeSeconds: 38,
           ASICModel: eASICModel.BM1366,
           PCB_Rev : "",

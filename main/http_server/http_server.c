@@ -289,6 +289,7 @@ static esp_err_t GET_system_info(httpd_req_t * req)
     cJSON_AddStringToObject(root, "wifiStatus", GLOBAL_STATE->SYSTEM_MODULE.wifi_status);
     cJSON_AddNumberToObject(root, "sharesAccepted", GLOBAL_STATE->SYSTEM_MODULE.shares_accepted);
     cJSON_AddNumberToObject(root, "sharesRejected", GLOBAL_STATE->SYSTEM_MODULE.shares_rejected);
+    cJSON_AddStringToObject(root, "SessionID", GLOBAL_STATE->extranonce_str);
     cJSON_AddNumberToObject(root, "uptimeSeconds", (esp_timer_get_time() - GLOBAL_STATE->SYSTEM_MODULE.start_time) / 1000000);
     cJSON_AddStringToObject(root, "ASICModel", GLOBAL_STATE->asic_model);
     cJSON_AddStringToObject(root, "PCB_Rev", PCBRev);
