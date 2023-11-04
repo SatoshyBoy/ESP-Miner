@@ -136,7 +136,7 @@ void POWER_MANAGEMENT_task(void * pvParameters){
         temp_MV = _fbound(temp_MV, -power_management->power_setpoint, 0);
 
         power_error = (power_management->power_setpoint + temp_MV) - power_management->power;
-        power_multiplier = power_multiplier +  power_error*0.002;
+        power_multiplier = power_multiplier +  power_error*0.008;
         power_multiplier = _fbound(power_multiplier, 0, 1);
 
         //Closed-cascade loop control
@@ -160,6 +160,6 @@ void POWER_MANAGEMENT_task(void * pvParameters){
         }
 
         //ESP_LOGI(TAG, "target %f, Freq %f, Volt %f, Power %f", target_frequency, power_management->frequency_value, power_management->voltage, power_management->power);
-        vTaskDelay(500 / portTICK_PERIOD_MS);
+        vTaskDelay(250 / portTICK_PERIOD_MS);
     }
 }
