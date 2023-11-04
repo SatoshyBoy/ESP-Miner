@@ -10,6 +10,24 @@
 
 const char *TAG = "asic_result";
 
+void ASIC_efficiency(GlobalState * GLOBAL_STATE)
+{
+    SystemModule * module = &GLOBAL_STATE->SYSTEM_MODULE;
+    PowerManagementModule * power_management = &GLOBAL_STATE->POWER_MANAGEMENT_MODULE;
+
+    static u_int16_t samples = 0;
+
+    // Moving average filter
+    if (module->current_hashrate > 0.1) {
+        power_management->efficiency = (samples * power_management->efficiency +
+                                        (GLOBAL_STATE->POWER_MANAGEMENT_MODULE.power / (module->current_hashrate / 1000.0))) /
+                                       (samples + 1);
+
+        if (samples < 100)
+            samples++;
+    }
+}
+
 void ASIC_result_task(void *pvParameters)
 {
     GlobalState *GLOBAL_STATE = (GlobalState *)pvParameters;
@@ -58,6 +76,8 @@ void ASIC_result_task(void *pvParameters)
                 GLOBAL_STATE->ASIC_TASK_MODULE.active_jobs[job_id]->pool_diff,
                 nonce_diff,
                 GLOBAL_STATE->ASIC_TASK_MODULE.active_jobs[job_id]->target);
+
+            ASIC_efficiency(GLOBAL_STATE);
 
             STRATUM_V1_submit_share(
                 GLOBAL_STATE->sock,

@@ -29,7 +29,6 @@ void ASIC_task(void *pvParameters)
         GLOBAL_STATE->valid_jobs[i] = 0;
     }
 
-    SYSTEM_notify_mining_started(&GLOBAL_STATE->SYSTEM_MODULE);
     ESP_LOGI(TAG, "ASIC Ready!");
     while (1)
     {

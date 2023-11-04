@@ -150,18 +150,6 @@ static void _update_hashrate(GlobalState * GLOBAL_STATE)
         return;
     }
 
-    static u_int16_t samples = 0;
-
-    // Moving average filter
-    if (module->current_hashrate > 0.1) {
-        power_management->efficiency = (samples * power_management->efficiency +
-                                        (GLOBAL_STATE->POWER_MANAGEMENT_MODULE.power / (module->current_hashrate / 1000.0))) /
-                                       (samples + 1);
-
-        if (samples < 100)
-            samples++;
-    }
-
     OLED_clearLine(0);
     memset(module->oled_buf, 0, 20);
     snprintf(module->oled_buf, 20, "Gh%s: %.1f W/Th: %.1f", module->historical_hashrate_init < HISTORY_LENGTH ? "*" : "",
@@ -465,11 +453,6 @@ void SYSTEM_notify_rejected_share(SystemModule * module)
     _update_shares(module);
 }
 
-void SYSTEM_notify_mining_started(SystemModule * module)
-{
-    module->duration_start = esp_timer_get_time();
-}
-
 void SYSTEM_notify_new_ntime(SystemModule * module, uint32_t ntime)
 {
     // Hourly clock sync
@@ -488,7 +471,6 @@ void SYSTEM_notify_found_nonce(SystemModule * module, double pool_diff, double f
 {
     // Calculate the time difference in seconds with sub-second precision
 
-    // hashrate = (nonce_difficulty * 2^32) / time_to_find
 
     module->historical_hashrate[module->historical_hashrate_rolling_index] = pool_diff;
     module->historical_hashrate_time_stamps[module->historical_hashrate_rolling_index] = esp_timer_get_time();
@@ -498,26 +480,27 @@ void SYSTEM_notify_found_nonce(SystemModule * module, double pool_diff, double f
     // ESP_LOGI(TAG, "nonce_diff %.1f, ttf %.1f, res %.1f", nonce_diff, duration,
     // historical_hashrate[historical_hashrate_rolling_index]);
 
-    if (module->historical_hashrate_init < HISTORY_LENGTH) {
-        module->historical_hashrate_init++;
-    } else {
-        module->duration_start =
-            module->historical_hashrate_time_stamps[(module->historical_hashrate_rolling_index + 1) % HISTORY_LENGTH];
+    if (module->historical_hashrate_init < HISTORY_LENGTH) 
+    {
+        module->duration_start =  module->historical_hashrate_time_stamps[0];
+        //wait 10 sample before show any result
+        if (module->historical_hashrate_init++ < 10)
+            return;
+    } 
+    else 
+    {
+        module->duration_start =  module->historical_hashrate_time_stamps[(module->historical_hashrate_rolling_index + 1) % HISTORY_LENGTH];
     }
+
     double sum = 0;
     for (int i = 0; i < module->historical_hashrate_init; i++) {
         sum += module->historical_hashrate[i];
     }
 
-    double duration = (double) (esp_timer_get_time() - module->duration_start) / 1000000;
+    double duration = (double) (esp_timer_get_time() - module->duration_start);
 
-    double rolling_rate = (sum * 4294967296) / (duration * 1000000000);
-    if (module->historical_hashrate_init < HISTORY_LENGTH) {
-        module->current_hashrate = rolling_rate;
-    } else {
-        // More smoothing
-        module->current_hashrate = ((module->current_hashrate * 9) + rolling_rate) / 10;
-    }
+    // hashrate = (nonce_difficulty * 2^32) / time_to_find
+    module->current_hashrate = (sum * 4294967296) / (duration * 1000);
 
     // logArrayContents(historical_hashrate, HISTORY_LENGTH);
     // logArrayContents(historical_hashrate_time_stamps, HISTORY_LENGTH);
