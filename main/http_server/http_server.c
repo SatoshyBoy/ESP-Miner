@@ -230,7 +230,7 @@ static esp_err_t PATCH_update_settings(httpd_req_t * req)
     nvs_config_set_u16(NVS_CONFIG_FAN_SPEED, fan_speed);
 
     //Adjust the power consumption dynamically.
-    GLOBAL_STATE->POWER_MANAGEMENT_MODULE.power_setpoint = maxPower;
+    GLOBAL_STATE->POWER_MANAGEMENT_MODULE.power_setpoint = maxPower/1000.0;
 
     cJSON_Delete(root);
     httpd_resp_send_chunk(req, NULL, 0);
