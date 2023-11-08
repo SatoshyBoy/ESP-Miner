@@ -30,6 +30,8 @@
 #include "lwip/sockets.h"
 #include "lwip/sys.h"
 
+#include "DS4432U.h"
+
 static const char * TAG = "http_server";
 
 static GlobalState * GLOBAL_STATE;
@@ -231,6 +233,7 @@ static esp_err_t PATCH_update_settings(httpd_req_t * req)
 
     //Adjust the power consumption dynamically.
     GLOBAL_STATE->POWER_MANAGEMENT_MODULE.power_setpoint = maxPower/1000.0;
+    DS4432U_set_vcore(coreVoltage / 1000.0);
 
     cJSON_Delete(root);
     httpd_resp_send_chunk(req, NULL, 0);
