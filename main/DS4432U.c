@@ -54,7 +54,11 @@ static uint8_t voltage_to_reg(float vout)
 
     // this is the transfer function. comes from the DS4432U+ datasheet
     change = fabs((((VFB / RB) - ((vout - VFB) / RA)) / IFS) * 127);
+    #if CONFIG_BITAXE2_A
+    reg = (uint8_t)(change + 0.5) -1;
+    #else
     reg = (uint8_t)ceil(change);
+    #endif
 
     // Set the MSB high if the requested voltage is BELOW nominal
     if (vout < NOMINAL)
