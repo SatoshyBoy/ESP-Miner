@@ -195,7 +195,7 @@ void BM1397_send_hash_frequency(float frequency)
 
 }
 
-static void _send_init(u_int64_t frequency)
+static bool _send_init(u_int64_t frequency)
 {
 
     // send serial data
@@ -206,29 +206,61 @@ static void _send_init(u_int64_t frequency)
 
     _set_chip_address(0x00);
 
+    uint8_t buffer[10] ={0};
+
     unsigned char init[6] = {0x00, CLOCK_ORDER_CONTROL_0, 0x00, 0x00, 0x00, 0x00}; // init1 - clock_order_control0
     _send_BM1397((TYPE_CMD | GROUP_ALL | CMD_WRITE), init, 6, false);
+    _send_BM1397((TYPE_CMD | GROUP_ALL | CMD_READ), init, 2, false);
+    SERIAL_rx(buffer, 9, 100);
+
+    if ( 0 != memcmp(buffer+2 , init+2 , 4))
+        return false;
+
 
     unsigned char init2[6] = {0x00, CLOCK_ORDER_CONTROL_1, 0x00, 0x00, 0x00, 0x00}; // init2 - clock_order_control1
     _send_BM1397((TYPE_CMD | GROUP_ALL | CMD_WRITE), init2, 6, false);
+    _send_BM1397((TYPE_CMD | GROUP_ALL | CMD_READ), init2, 2, false);
+    SERIAL_rx(buffer, 9, 100);
+
+    if ( 0 != memcmp(buffer+2 , init2+2 , 4))
+        return false;
 
     unsigned char init3[9] = {0x00, ORDERED_CLOCK_ENABLE, 0x00, 0x00, 0x00, 0x01}; // init3 - ordered_clock_enable
     _send_BM1397((TYPE_CMD | GROUP_ALL | CMD_WRITE), init3, 6, false);
+    _send_BM1397((TYPE_CMD | GROUP_ALL | CMD_READ), init3, 2, false);
+    SERIAL_rx(buffer, 9, 100);
+
+    if ( 0 != memcmp(buffer+2 , init3+2 , 4))
+        return false;
+
 
     unsigned char init4[9] = {0x00, CORE_REGISTER_CONTROL, 0x80, 0x00, 0x80, 0x74}; // init4 - init_4_?
     _send_BM1397((TYPE_CMD | GROUP_ALL | CMD_WRITE), init4, 6, false);
+    _send_BM1397((TYPE_CMD | GROUP_ALL | CMD_READ), init4, 2, false);
+    SERIAL_rx(buffer, 9, 100);
 
-    BM1397_set_job_difficulty_mask(256);
+    if ( 0 != memcmp(buffer+2 , init4+2 , 4))
+        return false;
+
+    BM1397_set_job_difficulty_mask(128);
 
     unsigned char init5[9] = {0x00, PLL3_PARAMETER, 0xC0, 0x70, 0x01, 0x11}; // init5 - pll3_parameter
     _send_BM1397((TYPE_CMD | GROUP_ALL | CMD_WRITE), init5, 6, false);
+    _send_BM1397((TYPE_CMD | GROUP_ALL | CMD_READ), init5, 2, false);
+    SERIAL_rx(buffer, 9, 100);
+
+    if ( 0 != memcmp(buffer+2 , init5+2 , 4))
+        return false;
 
     unsigned char init6[9] = {0x00, FAST_UART_CONFIGURATION, 0x06, 0x00, 0x00, 0x0F}; // init6 - fast_uart_configuration
     _send_BM1397((TYPE_CMD | GROUP_ALL | CMD_WRITE), init6, 6, false);
+    _send_BM1397((TYPE_CMD | GROUP_ALL | CMD_READ), init6, 2, false);
+    SERIAL_rx(buffer, 9, 100);
 
-    BM1397_fund_max_baud();
-        
-    BM1397_send_hash_frequency(frequency);
+    if ( 0 != memcmp(buffer+2 , init6+2 , 4))
+        return false;
+
+    return true;
 }
 
 // reset the BM1397 via the RTS line
@@ -279,16 +311,29 @@ void BM1397_init(u_int64_t frequency)
     esp_rom_gpio_pad_select_gpio(BM1397_RST_PIN);
     gpio_set_direction(BM1397_RST_PIN, GPIO_MODE_OUTPUT);
 
+    bool status;
+
     //verify if the BM1397 is prenset
     do{
 
         //reset the bm1397
         _reset();
 
-        _send_init(frequency);
+        status = _send_init(frequency);
 
-        //send the init command
-    } while(false==_send_read_address());
+        if (status == false)
+        {
+            ESP_LOGE(TAG, "Fail to initialize the ASIC.");
+            continue;
+        }
+
+        BM1397_fund_max_baud();
+        
+        BM1397_send_hash_frequency(frequency);
+
+        status &= _send_read_address();
+        
+    } while(status == false);
 
     ESP_LOGI(TAG, "BM1397 Initialized");
 }
@@ -399,12 +444,13 @@ void BM1397_set_job_difficulty_mask(int difficulty)
     _send_BM1397((TYPE_CMD | GROUP_ALL | CMD_WRITE), job_difficulty_mask, 6, false);
 }
 
-static uint8_t id = 0;
+
 
 void BM1397_send_work(void *pvParameters, bm_job *next_bm_job)
 {
 
     GlobalState *GLOBAL_STATE = (GlobalState *)pvParameters;
+    static uint8_t id = 0;
 
     job_packet job;
     // max job number is 128
