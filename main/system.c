@@ -124,8 +124,7 @@ static void _init_system(GlobalState * global_state, SystemModule * module)
 
     // Fan Tests
     EMC2101_init(nvs_config_get_u16(NVS_CONFIG_INVERT_FAN_POLARITY, 1));
-
-    EMC2101_set_fan_speed((float) nvs_config_get_u16(NVS_CONFIG_FAN_SPEED, 100) / 100);
+    EMC2101_set_fan_speed(1);
 
     vTaskDelay(500 / portTICK_PERIOD_MS);
 
@@ -471,7 +470,6 @@ void SYSTEM_notify_found_nonce(SystemModule * module, double pool_diff, double f
 {
     // Calculate the time difference in seconds with sub-second precision
 
-
     module->historical_hashrate[module->historical_hashrate_rolling_index] = pool_diff;
     module->historical_hashrate_time_stamps[module->historical_hashrate_rolling_index] = esp_timer_get_time();
 
@@ -480,16 +478,14 @@ void SYSTEM_notify_found_nonce(SystemModule * module, double pool_diff, double f
     // ESP_LOGI(TAG, "nonce_diff %.1f, ttf %.1f, res %.1f", nonce_diff, duration,
     // historical_hashrate[historical_hashrate_rolling_index]);
 
-    if (module->historical_hashrate_init < HISTORY_LENGTH) 
-    {
-        module->duration_start =  module->historical_hashrate_time_stamps[0];
-        //wait 10 sample before show any result
+    if (module->historical_hashrate_init < HISTORY_LENGTH) {
+        module->duration_start = module->historical_hashrate_time_stamps[0];
+        // wait 10 sample before show any result
         if (module->historical_hashrate_init++ < 10)
             return;
-    } 
-    else 
-    {
-        module->duration_start =  module->historical_hashrate_time_stamps[(module->historical_hashrate_rolling_index + 1) % HISTORY_LENGTH];
+    } else {
+        module->duration_start =
+            module->historical_hashrate_time_stamps[(module->historical_hashrate_rolling_index + 1) % HISTORY_LENGTH];
     }
 
     double sum = 0;
