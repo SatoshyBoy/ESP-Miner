@@ -15,7 +15,7 @@ typedef struct
         float efficiency;
 } PowerManagementModule;
 
-void POWER_MANAGEMENT_task(void *pvParameters);
+void POWER_MANAGEMENT_task_V2(void *pvParameters);
 void Sensor_task(void * pvParameters);
 
 #endif

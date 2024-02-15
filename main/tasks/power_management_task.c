@@ -81,7 +81,7 @@ void Sensor_task(void * pvParameters)
  * 
  *  @return none
 ************************************************************************************************************/
-void POWER_MANAGEMENT_task(void * pvParameters){
+void POWER_MANAGEMENT_task_V2(void * pvParameters){
 
     GlobalState *GLOBAL_STATE = (GlobalState*)pvParameters;
     PowerManagementModule * power_management = &GLOBAL_STATE->POWER_MANAGEMENT_MODULE;
