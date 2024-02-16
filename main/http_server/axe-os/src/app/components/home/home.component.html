@@ -76,11 +76,12 @@
                 <table *ngIf="info$ | async as info; else loading">
                     <tr>
                         <td>Power Consumption:</td>
-                        <td>{{info.power | number: '1.2-2'}} <small>W</small></td>
+                        <td>{{info.power | number: '1.2-2'}} <small>W</small> </td>
                     </tr>
                     <tr>
                         <td>Input Voltage:</td>
-                        <td>{{info.voltage | number: '0.0-0'}} <small>mV</small></td>
+                        <td>{{info.voltage | number: '0.0-0'}} <small>mV</small> <span class="danger"
+                                *ngIf="info.voltage < 4950">&nbsp; Danger: Low voltage</span></td>
                     </tr>
                     <tr>
                         <td>Input Current:</td>
@@ -104,7 +105,9 @@
                     </tr>
                     <tr>
                         <td>Chip Temperature:</td>
-                        <td>{{info.temp | number: '1.2-2'}} <small>C</small></td>
+                        <td>{{info.temp | number: '1.2-2'}} <small>C</small> <span class="danger"
+                                *ngIf="info.temp >= 70">&nbsp; Danger:
+                                High Temperature</span></td>
                     </tr>
                 </table>
 
