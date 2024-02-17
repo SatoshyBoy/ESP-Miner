@@ -62,6 +62,12 @@ static void _init_system(GlobalState * global_state, SystemModule * module)
     module->FOUND_BLOCK = false;
     module->startup_done = false;
 
+    // set the pool url
+    module->pool_url = nvs_config_get_string(NVS_CONFIG_STRATUM_URL, CONFIG_STRATUM_URL);
+
+    // set the pool port
+    module->pool_port = nvs_config_get_u16(NVS_CONFIG_STRATUM_PORT, CONFIG_STRATUM_PORT);
+
     // set the best diff string
     _suffix_string(module->best_nonce_diff, module->best_diff_string, DIFF_STRING_SIZE, 0);
 
@@ -466,7 +472,7 @@ void SYSTEM_notify_new_ntime(SystemModule * module, uint32_t ntime)
     settimeofday(&tv, NULL);
 }
 
-void SYSTEM_notify_found_nonce(SystemModule * module, double pool_diff, double found_diff, uint32_t nbits)
+void SYSTEM_notify_found_nonce(SystemModule * module, double pool_diff, double found_diff, uint32_t nbits, float power)
 {
     // Calculate the time difference in seconds with sub-second precision
 

@@ -350,7 +350,6 @@ static esp_err_t GET_system_info(httpd_req_t * req)
     }
 
     char * ssid = nvs_config_get_string(NVS_CONFIG_WIFI_SSID, CONFIG_ESP_WIFI_SSID);
-    char * wifiPass = nvs_config_get_string(NVS_CONFIG_WIFI_PASS, CONFIG_ESP_WIFI_PASSWORD);
     char * stratumURL = nvs_config_get_string(NVS_CONFIG_STRATUM_URL, CONFIG_STRATUM_URL);
     char * stratumUser = nvs_config_get_string(NVS_CONFIG_STRATUM_USER, CONFIG_STRATUM_USER);
 
@@ -382,7 +381,6 @@ static esp_err_t GET_system_info(httpd_req_t * req)
     cJSON_AddNumberToObject(root, "frequency", GLOBAL_STATE->POWER_MANAGEMENT_MODULE.frequency_value);
     cJSON_AddNumberToObject(root, "efficiency", GLOBAL_STATE->POWER_MANAGEMENT_MODULE.efficiency);
     cJSON_AddStringToObject(root, "ssid", ssid);
-    cJSON_AddStringToObject(root, "wifiPass", wifiPass);
     cJSON_AddStringToObject(root, "wifiStatus", GLOBAL_STATE->SYSTEM_MODULE.wifi_status);
     cJSON_AddNumberToObject(root, "sharesAccepted", GLOBAL_STATE->SYSTEM_MODULE.shares_accepted);
     cJSON_AddNumberToObject(root, "sharesRejected", GLOBAL_STATE->SYSTEM_MODULE.shares_rejected);
@@ -405,7 +403,6 @@ static esp_err_t GET_system_info(httpd_req_t * req)
     cJSON_AddNumberToObject(root, "fanspeed", nvs_config_get_u16(NVS_CONFIG_FAN_SPEED, 100));
 
     free(ssid);
-    free(wifiPass);
     free(stratumURL);
     free(stratumUser);
 

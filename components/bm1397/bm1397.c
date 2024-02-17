@@ -525,7 +525,6 @@ task_result *BM1397_proccess_work(void *pvParameters)
         ESP_LOGW(TAG, "return null");
         return NULL;
     }
-    ESP_LOGI(TAG, "return not null");
 
     static uint8_t nonce_found = 0;
     static uint32_t prev_nonce = 0;

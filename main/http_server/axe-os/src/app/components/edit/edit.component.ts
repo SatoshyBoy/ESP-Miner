@@ -59,7 +59,7 @@ export class EditComponent implements OnInit {
           ]],
           stratumUser: [info.stratumUser, [Validators.required]],
           ssid: [info.ssid, [Validators.required]],
-          wifiPass: [info.wifiPass, [Validators.required]],
+          wifiPass: ['password'],
           coreVoltage: [info.coreVoltage, [Validators.required]],
           maxPower: [info.maxPower, [Validators.required]],
           maxFrequency: [info.maxFrequency, [Validators.required]],
@@ -104,6 +104,10 @@ export class EditComponent implements OnInit {
     form.invertscreen = form.invertscreen == true ? 1 : 0;
     form.invertfanpolarity = form.invertfanpolarity == true ? 1 : 0;
     form.autofanspeed = form.autofanspeed == true ? 1 : 0;
+
+    if (form.wifiPass === 'password') {
+      delete form.wifiPass;
+    }
 
     this.systemService.updateSystem(this.uri, form)
       .pipe(this.loadingService.lockUIUntilComplete())
