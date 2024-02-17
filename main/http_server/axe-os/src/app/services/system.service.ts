@@ -15,9 +15,9 @@ export class SystemService {
     private httpClient: HttpClient
   ) { }
 
-  public getInfo(): Observable<ISystemInfo> {
+  public getInfo(uri: string = ''): Observable<ISystemInfo> {
     if (environment.production) {
-      return this.httpClient.get(`/api/system/info`) as Observable<ISystemInfo>;
+      return this.httpClient.get(`${uri}/api/system/info`) as Observable<ISystemInfo>;
     } else {
       return of(
         {
@@ -58,12 +58,12 @@ export class SystemService {
     }
   }
 
-  public restart() {
-    return this.httpClient.post(`/api/system/restart`, {});
+  public restart(uri: string = '') {
+    return this.httpClient.post(`${uri}/api/system/restart`, {});
   }
 
-  public updateSystem(update: any) {
-    return this.httpClient.patch(`/api/system`, update);
+  public updateSystem(uri: string = '', update: any) {
+    return this.httpClient.patch(`${uri}/api/system`, update);
   }
 
 
@@ -105,4 +105,11 @@ export class SystemService {
   }
 
 
+  public getSwarmInfo(): Observable<{ ip: string }[]> {
+    return this.httpClient.get(`/api/swarm/info`) as Observable<{ ip: string }[]>;
+  }
+
+  public updateSwarm(uri: string = '', swarmConfig: any) {
+    return this.httpClient.patch(`${uri}/api/swarm`, swarmConfig);
+  }
 }

@@ -1,8 +1,3 @@
-<div class="button-row">
-    <button (click)="restart()" class="btn btn-danger restart">Restart</button>
-</div>
-<div class="card">
-    <h2>Settings</h2>
     <ng-container *ngIf="form != null">
         <form [formGroup]="form">
             <div class="form-group">
@@ -33,13 +28,12 @@
                 <label>Stratum User: </label>
                 <input formControlName="stratumUser" type="text">
             </div>
-
             <div class="form-group">
                 <label>Max Power:</label>
                 <input formControlName="maxPower" type="number">
             </div>
 
-            <ng-container *ngIf="!devToolsOpen && ASICModel == eASICModel.BM1366">
+        <ng-container *ngIf="!devToolsOpen && ASICModel == eASICModel.BM1366">
 
                 <div class="form-group">
                     <label>Max Frequency </label>
@@ -56,19 +50,19 @@
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label>Core Voltage </label>
-                    <select formControlName="coreVoltage">
-                        <option value="1100">1100</option>
-                        <option value="1150">1150</option>
-                        <option value="1200">1200 (default)</option>
-                        <option value="1250">1250</option>
-                        <option value="1300">1300</option>
-                    </select>
-                </div>
-            </ng-container>
+            <div class="form-group">
+                <label>Core Voltage </label>
+                <select formControlName="coreVoltage">
+                    <option value="1100">1100</option>
+                    <option value="1150">1150</option>
+                    <option value="1200">1200 (default)</option>
+                    <option value="1250">1250</option>
+                    <option value="1300">1300</option>
+                </select>
+            </div>
+        </ng-container>
 
-            <ng-container *ngIf="!devToolsOpen && ASICModel == eASICModel.BM1397">
+        <ng-container *ngIf="!devToolsOpen && ASICModel == eASICModel.BM1397">
 
                 <div class="form-group">
                     <label>Max Frequency:</label>
@@ -81,60 +75,42 @@
                 </div>
             </ng-container>
 
-            <ng-container *ngIf="devToolsOpen === true">
-                <div class="form-group">
-                    <label>Frequency </label>
-                    <input formControlName="frequency" type="number">
-                </div>
-
-                <div class="form-group">
-                    <label>Core Voltage</label>
-                    <input formControlName="coreVoltage" type="number">
-                </div>
-            </ng-container>
-
-
+        <ng-container *ngIf="devToolsOpen === true">
             <div class="form-group">
-                <label>Invert Fan Polarity</label>
-                <input formControlName="invertfanpolarity" type="checkbox">
+                <label>Frequency </label>
+                <input formControlName="frequency" type="number">
             </div>
 
             <div class="form-group">
-                <label>Automatic Fan Control</label>
-                <input formControlName="autofanspeed" type="checkbox">
+                <label>Core Voltage</label>
+                <input formControlName="coreVoltage" type="number">
             </div>
+        </ng-container>
 
 
-            <div class="form-group" *ngIf="form.controls['autofanspeed'].value != true">
-                <label>Fan Speed {{form.controls['fanspeed'].value}}%
-                    <b *ngIf="form.controls['fanspeed'].value < 33" style="color:red">Danger: Could Cause
-                        Overheating</b> <b *ngIf="form.controls['fanspeed'].value == 100" style="color:	#F2A900">S19
-                        Simulator</b></label>
-                <input formControlName="fanspeed" type="range" [min]="0" [max]="100">
-            </div>
-            <div class="mt-2">
-                <button [disabled]="form.invalid" (click)="updateSystem()" class="btn btn-primary mr-2">Save</button>
-                <b style="line-height: 34px;">You must restart this device after saving for changes to take effect.</b>
-            </div>
+        <div class="form-group">
+            <label>Invert Fan Polarity</label>
+            <input formControlName="invertfanpolarity" type="checkbox">
+        </div>
+
+        <div class="form-group">
+            <label>Automatic Fan Control</label>
+            <input formControlName="autofanspeed" type="checkbox">
+        </div>
 
 
-        </form>
-    </ng-container>
+        <div class="form-group" *ngIf="form.controls['autofanspeed'].value != true">
+            <label>Fan Speed {{form.controls['fanspeed'].value}}%
+                <b *ngIf="form.controls['fanspeed'].value < 33" style="color:red">Danger: Could Cause
+                    Overheating</b> <b *ngIf="form.controls['fanspeed'].value == 100" style="color:	#F2A900">S19
+                    Simulator</b></label>
+            <input formControlName="fanspeed" type="range" [min]="0" [max]="100">
+        </div>
+        <div class="mt-2">
+            <button [disabled]="form.invalid" (click)="updateSystem()" class="btn btn-primary mr-2">Save</button>
+            <b style="line-height: 34px;">You must restart this device after saving for changes to take effect.</b>
+        </div>
 
 
-
-</div>
-
-<div class="card">
-    <h2>Update Firmware <span *ngIf="firmwareUpdateProgress != null">{{firmwareUpdateProgress}}%</span></h2>
-    <input type="file" id="file" (change)="otaUpdate($event)" accept=".bin">
-    <br>
-    <small>(esp-miner.bin)</small>
-</div>
-
-<div class="card">
-    <h2>Update Website <span *ngIf="websiteUpdateProgress != null">{{websiteUpdateProgress}}%</span></h2>
-    <input type="file" id="file" (change)="otaWWWUpdate($event)" accept=".bin">
-    <br>
-    <small>(www.bin)</small>
-</div>
+    </form>
+</ng-container>

@@ -12,22 +12,28 @@ import { EditComponent } from './components/edit/edit.component';
 import { HeaderComponent } from './components/header/header.component';
 import { HomeComponent } from './components/home/home.component';
 import { LoadingComponent } from './components/loading/loading.component';
+import { SettingsComponent } from './components/settings/settings.component';
+import { SwarmComponent } from './components/swarm/swarm.component';
 import { ANSIPipe } from './pipes/ansi.pipe';
 import { DateAgoPipe } from './pipes/date-ago.pipe';
 
 const components = [
   AppComponent,
-  HeaderComponent
+  HeaderComponent,
+  EditComponent,
+  HomeComponent,
+  LoadingComponent,
+  SettingsComponent
 ];
 
 @NgModule({
   declarations: [
     ...components,
-    EditComponent,
-    HomeComponent,
-    LoadingComponent,
+
     ANSIPipe,
-    DateAgoPipe
+    DateAgoPipe,
+    SwarmComponent,
+    SettingsComponent
   ],
   imports: [
     BrowserModule,
