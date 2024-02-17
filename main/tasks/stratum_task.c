@@ -33,7 +33,7 @@ void dns_found_cb(const char * name, const ip_addr_t * ipaddr, void * callback_a
     } else {
         bDNSInvalid = true;
     }
-}
+ }
 
 void stratum_task(void * pvParameters)
 {
@@ -44,23 +44,26 @@ void stratum_task(void * pvParameters)
     int addr_family = 0;
     int ip_protocol = 0;
 
-    char * stratum_url = GLOBAL_STATE->SYSTEM_MODULE.pool_url;
+
+    char *stratum_url = GLOBAL_STATE->SYSTEM_MODULE.pool_url;
     uint16_t port = GLOBAL_STATE->SYSTEM_MODULE.pool_port;
 
     // check to see if the STRATUM_URL is an ip address already
     if (inet_pton(AF_INET, stratum_url, &ip_Addr) == 1) {
         bDNSFound = true;
-    } else {
+    }
+    else
+    {
         ESP_LOGI(TAG, "Get IP for URL: %s\n", stratum_url);
         dns_gethostbyname(stratum_url, &ip_Addr, dns_found_cb, NULL);
-        while (!bDNSFound)
-            ;
+        while (!bDNSFound);
 
         if (bDNSInvalid) {
             ESP_LOGE(TAG, "DNS lookup failed for URL: %s\n", stratum_url);
-            // set ip_Addr to 0.0.0.0 so that connect() will fail
+            //set ip_Addr to 0.0.0.0 so that connect() will fail
             IP_ADDR4(&ip_Addr, 0, 0, 0, 0);
         }
+
     }
 
     // make IP address string from ip_Addr
@@ -84,8 +87,9 @@ void stratum_task(void * pvParameters)
         }
         ESP_LOGI(TAG, "Socket created, connecting to %s:%d", host_ip, port);
 
-        int err = connect(GLOBAL_STATE->sock, (struct sockaddr *) &dest_addr, sizeof(struct sockaddr_in6));
-        if (err != 0) {
+        int err = connect(GLOBAL_STATE->sock, (struct sockaddr *)&dest_addr, sizeof(struct sockaddr_in6));
+        if (err != 0)
+        {
             ESP_LOGE(TAG, "Socket unable to connect to %s:%d (errno %d)", stratum_url, port, errno);
             // close the socket
             shutdown(GLOBAL_STATE->sock, SHUT_RDWR);
@@ -95,12 +99,14 @@ void stratum_task(void * pvParameters)
             continue;
         }
 
+        //mining.subscribe
+        STRATUM_V1_subscribe(GLOBAL_STATE->sock, &GLOBAL_STATE->extranonce_str, &GLOBAL_STATE->extranonce_2_len, GLOBAL_STATE->asic_model);
+
+        //mining.configure
         STRATUM_V1_configure_version_rolling(GLOBAL_STATE->sock, &GLOBAL_STATE->version_mask);
 
-        STRATUM_V1_subscribe(GLOBAL_STATE->sock, &GLOBAL_STATE->extranonce_str, &GLOBAL_STATE->extranonce_2_len,
-                             GLOBAL_STATE->asic_model);
-
         // This should come before the final step of authenticate so the first job is sent with the proper difficulty set
+        //mining.suggest_difficulty
         STRATUM_V1_suggest_difficulty(GLOBAL_STATE->sock, STRATUM_DIFFICULTY);
 
         char * username = nvs_config_get_string(NVS_CONFIG_STRATUM_USER, STRATUM_USER);

@@ -17,9 +17,10 @@
         "string_view": "c",
         "*.tcc": "c"
     },
-    "editor.formatOnSave": true,
+    "editor.formatOnSave": false,
     "cSpell.words": [
         "ssid"
     ],
-    "idf.port": "/dev/ttyACM0"
+    "idf.port": "/dev/ttyACM0",
+    "C_Cpp.intelliSenseEngine": "Tag Parser"
 }
