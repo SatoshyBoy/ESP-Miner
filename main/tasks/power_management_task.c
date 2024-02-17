@@ -164,7 +164,6 @@ static void automatic_fan_speed(float chip_temp)
         result = ((chip_temp - min_temp) / range) * 100;
     }
 
-    ESP_LOGE(TAG, "Result %f", result);
     EMC2101_set_fan_speed((float) result / 100);
 }
 
