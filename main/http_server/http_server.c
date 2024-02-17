@@ -288,7 +288,7 @@ static esp_err_t PATCH_update_settings(httpd_req_t * req)
         DS4432U_set_vcore(item->valueint / 1000.0);
     }
     if ((item = cJSON_GetObjectItem(root, "maxPower")) != NULL) {
-        nvs_config_set_u16(NVS_CONFIG_ASIC_VOLTAGE, item->valueint);
+        nvs_config_set_u16(NVS_CONFIG_ASIC_MAXPOWER, item->valueint);
         //Adjust the power consumption dynamically.
         GLOBAL_STATE->POWER_MANAGEMENT_MODULE.power_setpoint = item->valueint/1000.0;
     }
