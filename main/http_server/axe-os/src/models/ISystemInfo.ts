@@ -28,6 +28,7 @@ export interface ISystemInfo {
     maxFrequency: number,
     frequency: number,
     version: string,
+    boardVersion: string,
     invertfanpolarity: number,
     autofanspeed: number,
     fanspeed: number,

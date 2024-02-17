@@ -11,6 +11,8 @@ typedef struct
     float power;
     float power_setpoint;
     float current;
+    bool HAS_POWER_EN;
+    bool HAS_PLUG_SENSE;
     float vcore;
     float efficiency;
 } PowerManagementModule;

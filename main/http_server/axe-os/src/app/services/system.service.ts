@@ -47,6 +47,7 @@ export class SystemService {
           maxFrequency: 500,
           frequency: 0,
           version: "2.0",
+          boardVersion: "MAX",
           flipscreen: 1,
           invertscreen: 0,
           invertfanpolarity: 1,
