@@ -33,4 +33,5 @@ export interface ISystemInfo {
     autofanspeed: number,
     fanspeed: number,
     efficiency: number
+    coreVoltageActual: number
 }
