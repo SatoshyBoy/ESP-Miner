@@ -138,6 +138,13 @@ bool DS4432U_set_vcore(float core_voltage)
 {
     uint8_t reg_setting;
 
+    //verify if the core voltage is valid
+    if (core_voltage > 1.5f)
+    {
+        ESP_LOGE(TAG,"Invalid core voltage level: %0.2f",core_voltage);
+        return false;
+    }
+
     reg_setting = voltage_to_reg(core_voltage);
 
     ESP_LOGI(TAG, "Set BM1397 voltage = %.3fV [0x%02X]", core_voltage, reg_setting);
