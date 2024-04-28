@@ -156,8 +156,8 @@ static void _update_hashrate(GlobalState * GLOBAL_STATE)
     }
 
     OLED_clearLine(0);
-    memset(module->oled_buf, 0, 20);
-    snprintf(module->oled_buf, 20, "Gh%s: %.1f W/Th: %.1f", module->historical_hashrate_init < HISTORY_LENGTH ? "*" : "",
+    memset(module->oled_buf, 0, sizeof(module->oled_buf));
+    snprintf(module->oled_buf, sizeof(module->oled_buf), " Gh%s: %.1f W/Th: %.1f ", module->historical_hashrate_init < HISTORY_LENGTH ? "*" : "",
              module->current_hashrate, power_management->efficiency);
     ESP_LOGI(TAG, "%s", module->oled_buf);
     OLED_writeString(0, 0, module->oled_buf);
@@ -169,8 +169,8 @@ static void _update_shares(SystemModule * module)
         return;
     }
     OLED_clearLine(1);
-    memset(module->oled_buf, 0, 20);
-    snprintf(module->oled_buf, 20, "A/R: %u/%u", module->shares_accepted, module->shares_rejected);
+    memset(module->oled_buf, 0, sizeof(module->oled_buf));
+    snprintf(module->oled_buf, sizeof(module->oled_buf), " A/R: %u/%u         ", module->shares_accepted, module->shares_rejected);
     OLED_writeString(0, 1, module->oled_buf);
 }
 
@@ -180,8 +180,8 @@ static void _update_best_diff(SystemModule * module)
         return;
     }
     OLED_clearLine(3);
-    memset(module->oled_buf, 0, 20);
-    snprintf(module->oled_buf, 20, module->FOUND_BLOCK ? "!!! BLOCK FOUND !!!" : "BD: %s", module->best_diff_string);
+    memset(module->oled_buf, 0, sizeof(module->oled_buf));
+    snprintf(module->oled_buf, sizeof(module->oled_buf), module->FOUND_BLOCK ? " !!! BLOCK FOUND !!!" : " BD: %s", module->best_diff_string);
     OLED_writeString(0, 3, module->oled_buf);
 }
 
@@ -200,20 +200,20 @@ static void _update_system_info(GlobalState * GLOBAL_STATE)
 
     if (OLED_status()) {
 
-        memset(module->oled_buf, 0, 20);
-        snprintf(module->oled_buf, 20, " Fan: %d RPM", power_management->fan_speed);
+        memset(module->oled_buf, 0, sizeof(module->oled_buf));
+        snprintf(module->oled_buf, sizeof(module->oled_buf), " Fan: %d RPM", power_management->fan_speed);
         OLED_writeString(0, 0, module->oled_buf);
 
-        memset(module->oled_buf, 0, 20);
-        snprintf(module->oled_buf, 20, "Temp: %.1f C", power_management->chip_temp);
+        memset(module->oled_buf, 0, sizeof(module->oled_buf));
+        snprintf(module->oled_buf, sizeof(module->oled_buf), " Temp: %.1f C", power_management->chip_temp);
         OLED_writeString(0, 1, module->oled_buf);
 
-        memset(module->oled_buf, 0, 20);
-        snprintf(module->oled_buf, 20, " Pwr: %.3f W", power_management->power);
+        memset(module->oled_buf, 0, sizeof(module->oled_buf));
+        snprintf(module->oled_buf, sizeof(module->oled_buf), " Pwr: %.3f W", power_management->power);
         OLED_writeString(0, 2, module->oled_buf);
 
-        memset(module->oled_buf, 0, 20);
-        snprintf(module->oled_buf, 20, " %i mV: %i mA", (int) power_management->voltage, (int) power_management->current);
+        memset(module->oled_buf, 0, sizeof(module->oled_buf));
+        snprintf(module->oled_buf, sizeof(module->oled_buf), " %i mV: %i mA", (int) power_management->voltage, (int) power_management->current);
         OLED_writeString(0, 3, module->oled_buf);
     }
 }
@@ -226,20 +226,20 @@ static void _update_esp32_info(SystemModule * module)
 
     if (OLED_status()) {
 
-        memset(module->oled_buf, 0, 20);
-        snprintf(module->oled_buf, 20, "FH: %lu bytes", free_heap_size);
+        memset(module->oled_buf, 0, sizeof(module->oled_buf));
+        snprintf(module->oled_buf, sizeof(module->oled_buf), " FH: %lu bytes", free_heap_size);
         OLED_writeString(0, 0, module->oled_buf);
 
-        memset(module->oled_buf, 0, 20);
-        snprintf(module->oled_buf, 20, "vCore: %u mV", vcore);
+        memset(module->oled_buf, 0, sizeof(module->oled_buf));
+        snprintf(module->oled_buf, sizeof(module->oled_buf), " vCore: %u mV", vcore);
         OLED_writeString(0, 1, module->oled_buf);
 
         esp_netif_get_ip_info(netif, &ip_info);
         char ip_address_str[IP4ADDR_STRLEN_MAX];
         esp_ip4addr_ntoa(&ip_info.ip, ip_address_str, IP4ADDR_STRLEN_MAX);
 
-        memset(module->oled_buf, 0, 20);
-        snprintf(module->oled_buf, 20, "IP: %s", ip_address_str);
+        memset(module->oled_buf, 0, sizeof(module->oled_buf));
+        snprintf(module->oled_buf, sizeof(module->oled_buf), " IP: %s", ip_address_str);
         OLED_writeString(0, 2, module->oled_buf);
 
         OLED_writeString(0, 3, esp_app_get_description()->version);
@@ -249,8 +249,8 @@ static void _update_esp32_info(SystemModule * module)
 static void _init_connection(SystemModule * module)
 {
     if (OLED_status()) {
-        memset(module->oled_buf, 0, 20);
-        snprintf(module->oled_buf, 20, "Connecting to ssid:");
+        memset(module->oled_buf, 0, sizeof(module->oled_buf));
+        snprintf(module->oled_buf, sizeof(module->oled_buf), " Connecting to ssid:");
         OLED_writeString(0, 0, module->oled_buf);
     }
 }
@@ -259,13 +259,13 @@ static void _update_connection(SystemModule * module)
 {
     if (OLED_status()) {
         OLED_clearLine(2);
-        memset(module->oled_buf, 0, 20);
-        snprintf(module->oled_buf, 20, "%s", module->ssid);
+        memset(module->oled_buf, 0, sizeof(module->oled_buf));
+        snprintf(module->oled_buf, sizeof(module->oled_buf), " %s", module->ssid);
         OLED_writeString(0, 1, module->oled_buf);
 
         OLED_clearLine(3);
-        memset(module->oled_buf, 0, 20);
-        snprintf(module->oled_buf, 20, "%s", module->wifi_status);
+        memset(module->oled_buf, 0, sizeof(module->oled_buf));
+        snprintf(module->oled_buf, sizeof(module->oled_buf), " %s", module->wifi_status);
         OLED_writeString(0, 3, module->oled_buf);
     }
 }
@@ -287,8 +287,8 @@ static void _update_system_performance(GlobalState * GLOBAL_STATE)
         _update_shares(module);
         _update_best_diff(module);
 
-        memset(module->oled_buf, 0, 20);
-        snprintf(module->oled_buf, 20, "UT: %dd %ih %im", uptime_in_days, uptime_in_hours, uptime_in_minutes);
+        memset(module->oled_buf, 0, sizeof(module->oled_buf));
+        snprintf(module->oled_buf, sizeof(module->oled_buf), " UT: %dd %ih %im", uptime_in_days, uptime_in_hours, uptime_in_minutes);
         OLED_writeString(0, 2, module->oled_buf);
     }
 }

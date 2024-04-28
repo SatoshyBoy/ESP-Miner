@@ -130,10 +130,10 @@ void app_main(void)
 void MINER_set_wifi_status(wifi_status_t status, uint16_t retry_count)
 {
     if (status == WIFI_RETRYING) {
-        snprintf(GLOBAL_STATE.SYSTEM_MODULE.wifi_status, 20, "Retrying: %d/%d", retry_count, WIFI_MAXIMUM_RETRY);
+        snprintf(GLOBAL_STATE.SYSTEM_MODULE.wifi_status, 20, " Retrying: %d/%d", retry_count, WIFI_MAXIMUM_RETRY);
         return;
     } else if (status == WIFI_CONNECT_FAILED) {
-        snprintf(GLOBAL_STATE.SYSTEM_MODULE.wifi_status, 20, "Connect Failed!");
+        snprintf(GLOBAL_STATE.SYSTEM_MODULE.wifi_status, 20, " Connect Failed!");
         return;
     }
 }

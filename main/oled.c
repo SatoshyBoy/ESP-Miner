@@ -54,7 +54,7 @@ bool OLED_init(void)
                                 0x40, // cmd: Set Display Start Line
                                 0x8d,
                                 0x14, // cmd: Set Higher Column Start Address for Page Addressing Mode
-                                0xa1,
+                                0xa0, // Set Segment re-map
                                 0xc8, // cmd: Set COM Output Scan Direction C0/C8
                                 0xda, // cmd: Set COM Pins Hardware Configuration
                                 0x02, //
